@@ -6,8 +6,6 @@ import {
     AppRegistry,
 } from 'react-native';
 
-//const CODE_PUSH_PRODUCTION_KEY = "7sCNpYjMHV89MyTvVwu5bhvWRQcLE1Z_BgAMb";
-//const codePush = require('react-native-code-push');
 
 import RootTab from './AppComponents/RootTabComponent';
 import CommonComponents from './commonComponents/CommonComponents';
