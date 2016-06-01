@@ -1,5 +1,5 @@
 'use strict';
-import React, {Component} from 'react';
+import React, {Component,PropTypes} from 'react';
 import {
     View,
     ActivityIndicatorIOS,
@@ -24,8 +24,8 @@ const ICON_SIZE = 18;
 export default class UserComponent extends Component {
 
     static propTypes = {
-        user: React.PropTypes.object,
-        userLoaded: false,
+        user: PropTypes.object,
+        userLoaded: PropTypes.bool,
     }
 
     // 构造

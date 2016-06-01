@@ -326,7 +326,7 @@ export default class GithubService {
         return GLOBAL_USER.login.length > 0;
     }
 
-    _setNeedSaveGlobalUser() {
+    static _setNeedSaveGlobalUser() {
         return AsyncStorage.setItem(GH_USER_KEY, JSON.stringify(GLOBAL_USER));
     }
 }

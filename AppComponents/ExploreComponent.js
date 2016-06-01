@@ -1,6 +1,6 @@
 'use strict';
 
-import React ,{Component} from 'react';
+import React, {Component} from 'react';
 import {
     View,
     StyleSheet,
@@ -18,27 +18,27 @@ const TrendLanguages = require('../commonComponents/TrendLanguages.json');
 const ICON_SIZE = 12;
 const BASE_TRENDING_PATH = 'http://trending.codehub-app.com/v2/trending';
 
-export default class  ExploreComponent extends Component{
+export default class ExploreComponent extends Component {
 
 
     // 构造
-      constructor(props) {
+    constructor(props) {
         super(props);
         // 初始状态
-          this. _selectTab=0;
-          this._lvs=[];
+        this._selectTab = 0;
+        this._lvs = [];
         this.state = {
             currentLanguage: null,
         };
-      }
+    }
 
-    _resetLoadedStatus=()=> {
+    _resetLoadedStatus = ()=> {
         this._lvs.forEach((lv) => {
             lv.clearData();
         })
     }
 
-    onSelectLanguage=(language) =>{
+    onSelectLanguage = (language) => {
         this.setState({
             currentLanguage: language,
         });
@@ -47,13 +47,13 @@ export default class  ExploreComponent extends Component{
         refreshListView && refreshListView.reloadData();
     }
 
-    onChangeTab=(tab)=> {
+    onChangeTab = (tab)=> {
         this._selectTab = tab.i;
         const refreshListView = this._lvs[tab.i];
         refreshListView && refreshListView.reloadDataIfNeed();
     }
 
-    _getPath=(desc)=> {
+    _getPath = (desc)=> {
         let path = BASE_TRENDING_PATH + '?since=' + desc;
         const currentLanguage = this.state.currentLanguage;
         if (currentLanguage && currentLanguage != 'All Languages') {
@@ -63,34 +63,32 @@ export default class  ExploreComponent extends Component{
         return path;
     }
 
-    reloadDailyPath=()=> {
+    reloadDailyPath = ()=> {
         return this._getPath('daily');
     }
 
-    reloadWeeklyPath=()=> {
+    reloadWeeklyPath = ()=> {
         return this._getPath('weekly');
     }
 
-    reloadMonthlyPath=()=> {
+    reloadMonthlyPath = ()=> {
         return this._getPath('monthly');
     }
 
-    handleReloadData=(value)=> {
+    handleReloadData = (value)=> {
         return value.json();
     }
 
-    renderRepo=(rowData, sectionID, rowID, highlightRow)=> {
+    renderRepo = (rowData, sectionID, rowID, highlightRow)=> {
         return <ExploreCell key={rowID} trendRepo={rowData} navigator={this.props.navigator}/>;
     }
 
     componentDidMount = ()=> {
-       this.onChangeTab({i:0});
+        //this.onChangeTab({i: 0});
     }
+
     render() {
-        let paddingTop = 64;
-        if (Platform.OS == 'android') {
-            paddingTop = 44;
-        }
+        let paddingTop = (Platform.OS == 'android' ? 44 : 64);
         return (
             <View style={{backgroundColor: 'white', paddingTop: paddingTop, flex: 1}}>
                 <View style={{flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
@@ -100,7 +98,7 @@ export default class  ExploreComponent extends Component{
                     />
                 </View>
                 <ScrollableTabView
-                    onChangeTab={this.onChangeTab} initialPage={0}>
+                    onChangeTab={this.onChangeTab} initialPage={1} page={1} tabBarPosition={'top'}>
                     <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[0] = cp}
