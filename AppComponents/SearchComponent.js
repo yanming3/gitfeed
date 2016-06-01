@@ -1,61 +1,62 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Colors = require('../commonComponents/Colors');
-const ScrollableTabView = require('react-native-scrollable-tab-view');
-const DefaultTabBar = require('./DefaultTabBar');
-const GHRefreshListView = require('./GHRefreshListView');
-const RepoCell = require('./RepoCell');
-const UserCell = require('./UserCell');
-const ErrorPlaceholder = require('../commonComponents/ErrorPlacehoderComponent');
-const LanguageComponent = require('./LanguageComponent');
-const ExploreCell = require('./ExploreCell');
-
-const {
+'use strict';
+import React,{Component} from 'react';
+import {
     View,
     StyleSheet,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
 
-const SearchComponent = React.createClass({
-    _selectTab: 0,
-    _text: '',
-    _lvs: [],
+import GHService from '../networkService/GithubServices';
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import RefreshListView from './RefreshListView';
+import UserCell from './UserCell';
+import ErrorPlaceholder from '../commonComponents/ErrorPlacehoderComponent';
+import LanguageComponent from './LanguageComponent';
+import ExploreCell from './ExploreCell';
 
-    getInitialState() {
-        return {
+
+export default class SearchComponent extends Component {
+    _selectTab = 0;
+    _text = '';
+    _lvs = [];
+
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             toggleLanguage: false,
             currentLanguage: null,
-        }
-    },
+        };
+    }
 
-    _resetLoadedStatus() {
+
+    _resetLoadedStatus = ()=> {
         this._lvs.forEach((lv) => {
             lv.clearData();
         })
-    },
+    }
 
-    onChangeText(text) {
+    onChangeText = (text)=> {
         this._resetLoadedStatus();
         this._text = text;
-    },
+    }
 
-    onSubmitEditing() {
+    onSubmitEditing = ()=> {
         if (this._text.length == 0) return;
 
         const refreshListView = this._lvs[this._selectTab];
         refreshListView && refreshListView.reloadData();
-    },
+    }
 
-    onChangeTab(tab) {
+    onChangeTab = (tab)=> {
         this._selectTab = tab.i;
         const refreshListView = this._lvs[tab.i];
         refreshListView && refreshListView.reloadDataIfNeed();
-    },
+    }
 
-    onSelectLanguage(language) {
+    onSelectLanguage = (language)=> {
         this.setState({
             toggleLanguage: false,
             currentLanguage: language,
@@ -63,75 +64,78 @@ const SearchComponent = React.createClass({
 
         const refreshListView = this._lvs[this._selectTab];
         refreshListView && refreshListView.reloadData();
-    },
+    }
 
-    componentWillMount() {
+    componentWillMount = ()=> {
         const route = this.props.route;
         route.sp = this;
-    },
+    }
 
-    componentWillUnmount() {
+    componentWillUnmount = ()=> {
         const route = this.props.route;
         route.sp = null;
-    },
+    }
 
-    _appendLanguage(path) {
+    _appendLanguage = (path)=> {
         const currentLanguage = this.state.currentLanguage;
         if (currentLanguage && currentLanguage !== 'All Languages') {
             path += '+language:' + currentLanguage;
         }
 
         return path;
-    },
+    }
 
-    reloadReopPath() {
+    reloadReopPath = ()=> {
         if (this._text.length == 0) return;
 
-        let apiPath = GHService.apiPath();
+        let apiPath = GHService.apiPath;
         apiPath += '/search/repositories?' + 'q=' + this._text;
         apiPath = this._appendLanguage(apiPath);
 
         return apiPath;
-    },
+    }
 
-    reloadUserPath() {
+    reloadUserPath = ()=> {
         if (this._text.length == 0) return;
 
-        let apiPath = GHService.apiPath();
+        let apiPath = GHService.apiPath;
         apiPath += '/search/users?' + 'q=' + this._text;
         apiPath = this._appendLanguage(apiPath);
 
         return apiPath;
-    },
+    }
 
-    reloadOrgPath() {
+    reloadOrgPath = ()=> {
         if (this._text.length == 0) return;
 
-        let apiPath = GHService.apiPath();
+        let apiPath = GHService.apiPath;
         apiPath += '/search/users?' + 'q=' + this._text + '+type:org';
         apiPath = this._appendLanguage(apiPath);
 
         return apiPath;
-    },
+    }
 
-    handleReloadData(value) {
-        const json = value._bodyInit.length > 0 && JSON.parse(value._bodyInit);
-        return json.items;
-    },
+    handleReloadData = (value)=> {
+        return new Promise((resolve, reject)=> {
+            value.json().then(data=> {
+                return resolve(data.items);
+            })
+        });
+    }
 
-    renderRepoRow(rowData, sectionID, rowID, highlightRow) {
+    renderRepoRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <ExploreCell trendRepo={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
-    renderUserRow(rowData, sectionID, rowID, highlightRow) {
+    renderUserRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <UserCell key={rowID} user={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
-    renderOrgRow(rowData, sectionID, rowID, highlightRow) {
+    renderOrgRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <UserCell key={rowID} user={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
-    renderRepoError(error) {
+    renderRepoError = (error)=> {
         let message = error.message;
         if (message == 'Not Found') {
             message = message + ' ' + this._text + ' for repo';
@@ -144,9 +148,9 @@ const SearchComponent = React.createClass({
                 desc={'repo load failed'}
                 onPress={reloadData}/>
         );
-    },
+    }
 
-    renderUserError(error) {
+    renderUserError = (error)=> {
         let message = error.message;
         if (message == 'Not Found') {
             message = message + ' ' + this._text + ' for user';
@@ -159,9 +163,9 @@ const SearchComponent = React.createClass({
                 desc={'user load failed'}
                 onPress={reloadData}/>
         );
-    },
+    }
 
-    renderOrgError(error) {
+    renderOrgError = (error)=> {
         let message = error.message;
         if (message == 'Not Found') {
             message = message + ' ' + this._text + ' for org';
@@ -174,7 +178,7 @@ const SearchComponent = React.createClass({
                 desc={'org load failed'}
                 onPress={reloadData}/>
         );
-    },
+    }
 
     render() {
         let top = 64;
@@ -188,10 +192,9 @@ const SearchComponent = React.createClass({
                     onSelectLanguage={this.onSelectLanguage}
                     currentLanguage={this.state.currentLanguage}/>
                 <ScrollableTabView
-                    renderTabBar={() => <DefaultTabBar/>}
                     initialPage={0}
                     onChangeTab={this.onChangeTab}>
-                    <GHRefreshListView
+                    <RefreshListView
                         enablePullToRefresh={false}
                         ref={(cp) => this._lvs[0] = cp}
                         tabLabel="Repos"
@@ -201,8 +204,8 @@ const SearchComponent = React.createClass({
                         navigator={this.props.navigator}
                         renderErrorPlaceholder={this.renderRepoError}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={false}
                         ref={(cp) => this._lvs[1] = cp}
                         tabLabel="Users"
@@ -213,8 +216,8 @@ const SearchComponent = React.createClass({
                         context={this.searchedText}
                         renderErrorPlaceholder={this.renderUserError}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={false}
                         ref={(cp) => this._lvs[2] = cp}
                         tabLabel="Orgs"
@@ -225,12 +228,12 @@ const SearchComponent = React.createClass({
                         context={this.searchedText}
                         renderErrorPlaceholder={this.renderOrgError}
                     >
-                    </GHRefreshListView>
+                    </RefreshListView>
                 </ScrollableTabView>
             </View>
         )
     }
-});
+};
 
 var styles = StyleSheet.create({
     container: {
@@ -244,5 +247,3 @@ var styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.01)',
     },
 });
-
-module.exports = SearchComponent;

@@ -1,55 +1,53 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const ScrollableTabView = require('react-native-scrollable-tab-view');
-const Icon = require('react-native-vector-icons/Ionicons');
-const Colors = require('../commonComponents/Colors');
-const DefaultTabBar = require('./DefaultTabBar');
-const GHRefreshListView = require('./GHRefreshListView');
-const RepoCell = require('./RepoCell');
-const UserCell = require('./UserCell');
-
-const {
+'use strict';
+import React, {Component, PropTypes} from 'react';
+import {
     View,
     Text,
     StyleSheet,
     Image,
     Platform,
-    } = ReactNative;
+} from 'react-native';
+
+import GHService from '../networkService/GithubServices';
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import Icon from 'react-native-vector-icons/Ionicons';
+import Colors from '../commonComponents/Colors';
+import RefreshListView from './RefreshListView';
+import  RepoCell from './RepoCell';
+import UserCell from './UserCell';
+
 
 const ICON_SIZE = 18;
 
-const OrgComponent = React.createClass({
-    PropTypes: {
-        org: React.PropTypes.object,
-    },
+export default class OrgComponent extends Component {
+    static propTypes = {
+        org: PropTypes.object,
+    }
 
-    handleReloadData(value) {
-        const json = value._bodyInit.length > 0 && JSON.parse(value._bodyInit);
-        return json;
-    },
+    handleReloadData = (value)=> {
+        return value.json();
+    }
 
-    reloadReopPath() {
+    reloadReopPath = ()=> {
         const org = this.props.org;
-        const apiPath = GHService.apiPath() + '/orgs/' + org.login + '/repos';
+        const apiPath = GHService.apiPath + '/orgs/' + org.login + '/repos';
         return apiPath;
-    },
+    }
 
-    reloadUserPath() {
+    reloadUserPath = ()=> {
         const org = this.props.org;
-        const apiPath = GHService.apiPath() + '/orgs/' + org.login + '/members';
+        const apiPath = GHService.apiPath + '/orgs/' + org.login + '/members';
 
         return apiPath;
-    },
+    }
 
-    renderRepoRow(rowData, sectionID, rowID, highlightRow) {
+    renderRepoRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <RepoCell key={rowID} repo={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
-    renderUserRow(rowData, sectionID, rowID, highlightRow) {
+    renderUserRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <UserCell key={rowID} user={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
     render() {
         let top = 64;
@@ -60,8 +58,8 @@ const OrgComponent = React.createClass({
         return (
             <View style={{backgroundColor: 'white', marginTop: top, flex: 1}}>
                 <AboutComponent user={this.props.org} navigator={this.props.navigator}/>
-                <ScrollableTabView renderTabBar={() => <DefaultTabBar />}>
-                    <GHRefreshListView
+                <ScrollableTabView>
+                    <RefreshListView
                         enablePullToRefresh={false}
                         tabLabel="Repos"
                         renderRow={this.renderRepoRow}
@@ -70,8 +68,8 @@ const OrgComponent = React.createClass({
                         navigator={this.props.navigator}
                         renderErrorPlaceholder={this.renderRepoError}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={false}
                         tabLabel="Members"
                         renderRow={this.renderUserRow}
@@ -80,37 +78,41 @@ const OrgComponent = React.createClass({
                         navigator={this.props.navigator}
                         renderErrorPlaceholder={this.renderUserError}
                     >
-                    </GHRefreshListView>
+                    </RefreshListView>
                 </ScrollableTabView>
             </View>
         )
     }
-});
+};
 
-const AboutComponent = React.createClass({
-    PropTypes: {
-        user: React.PropTypes.object,
-    },
+class AboutComponent extends Component {
+    static propTypes = {
+        user: PropTypes.object,
+    }
 
-    getInitialState() {
-        return {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             user: this.props.user,
-        }
-    },
+        };
+    }
 
-    onPressEmail() {
+
+    onPressEmail = ()=> {
         console.log('press email');
-    },
+    }
 
-    onPressBlog() {
+    onPressBlog = ()=> {
         const blog = {
             html: this.state.user.blog,
             title: this.state.user.login + "'s blog"
         }
         this.props.navigator.push({id: 'web', obj: blog})
-    },
+    }
 
-    componentDidMount() {
+    componentDidMount = ()=> {
         GHService.fetchPromise(this.props.user.url)
             .then(value => {
                 const resUser = JSON.parse(value._bodyInit);
@@ -119,7 +121,7 @@ const AboutComponent = React.createClass({
                     user: detailUser,
                 });
             })
-    },
+    }
 
     render() {
         const user = this.state.user;
@@ -219,7 +221,8 @@ const AboutComponent = React.createClass({
             </View>
         )
     }
-});
+}
+;
 
 var styles = StyleSheet.create({
     icon: {
@@ -279,6 +282,3 @@ var styles = StyleSheet.create({
         fontSize: 12,
     },
 });
-
-
-module.exports = OrgComponent;

@@ -1,12 +1,6 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Colors = require('../commonComponents/Colors');
-const SettingComponent = require('./SettingsCell');
-const GFDiskCache = require('../iosComponents/GFDiskCache');
-
-const {
+'use strict';
+import React,{Component} from 'react';
+import {
     Text,
     StyleSheet,
     ScrollView,
@@ -15,27 +9,37 @@ const {
     Linking,
     Alert,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
-const PersonComponent = React.createClass({
-    getInitialState() {
-        return {
+import Colors from '../commonComponents/Colors';
+import SettingCell from './SettingsCell';
+import GHService from '../networkService/GithubServices';
+
+const GFDiskCache = require('../iosComponents/GFDiskCache');
+
+
+export default class SettingComponent extends Component {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             cachedSize: null,
             appVersion: '',
             appBuild: '',
             appStoreURL: '',
         };
-    },
+    }
 
-    componentWillMount() {
+    componentWillMount = ()=> {
         GFDiskCache.getDiskCacheCost((size) => {
             this.setState({
                 cachedSize: size,
             });
         });
-    },
+    }
 
-    onShare() {
+    onShare = ()=> {
         if (Platform.OS === 'android') {
             return;
         }
@@ -49,9 +53,9 @@ const PersonComponent = React.createClass({
             },
             () => {
             });
-    },
+    }
 
-    pressLogout() {
+    pressLogout = ()=> {
         const title = 'Are you sure to leave?';
 
         if (Platform.OS === 'android') {
@@ -76,14 +80,14 @@ const PersonComponent = React.createClass({
                     }
                 });
         }
-    },
+    }
 
-    onRate() {
+    onRate = ()=> {
         const rURL = 'itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=1079873993&pageNumber=0&sortOrdering=2&mt=8'
         Linking.openURL(rURL);
-    },
+    }
 
-    pressLogout() {
+    pressLogout = ()=> {
         ActionSheetIOS.showActionSheetWithOptions({
                 title: 'Are you sure to leave?',
                 options: ['logout', 'cancel'],
@@ -95,16 +99,16 @@ const PersonComponent = React.createClass({
                     GHService.logout();
                 }
             });
-    },
+    }
 
-    onOpenAuthor() {
+    onOpenAuthor = ()=> {
         const user = {
             url: 'https://api.github.com/users/yanming3',
             login: 'yanming3'
         };
 
         this.props.navigator.push({id: 'user', obj: user});
-    },
+    }
 
     render() {
         const isLogined = GHService.isLogined();
@@ -121,7 +125,7 @@ const PersonComponent = React.createClass({
                 automaticallyAdjustContentInsets={false}
                 contentInset={{top: 64, left: 0, bottom: 49, right: 0}}
                 contentOffset={{x:0, y:-64}}>
-                <SettingComponent
+                <SettingCell
                     iconName={'ios-trash'}
                     iconColor={Colors.blue}
                     settingName={'清空缓存'}
@@ -130,19 +134,19 @@ const PersonComponent = React.createClass({
                           cachedSize: size,
                         });
                 })}}/>
-                <SettingComponent
+                <SettingCell
                     iconName={'ios-share'}
                     iconColor={Colors.green}
                     settingName={'分享'}
                     onPress={this.onShare}
                 />
-                <SettingComponent
+                <SettingCell
                     iconName={'ios-star'}
                     iconColor={'#FDCC4F'}
                     settingName={'建议'}
                     onPress={this.onRate}
                 />
-                <SettingComponent
+                <SettingCell
                     iconName={'ios-browsers'}
                     iconColor={Colors.purple}
                     settingName={'关于'}
@@ -158,7 +162,7 @@ const PersonComponent = React.createClass({
             </ScrollView>
         );
     }
-});
+};
 
 var styles = StyleSheet.create({
     container: {
@@ -180,5 +184,3 @@ var styles = StyleSheet.create({
         fontSize: 17,
     }
 });
-
-module.exports = PersonComponent;

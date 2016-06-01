@@ -1,30 +1,33 @@
-const React = require('react');
-const ReactNative = require('react-native');
-const GHRefreshListView = require('./GHRefreshListView');
-const ExploreCell = require('./ExploreCell');
+'use strict';
 
-const {
+import React,{Component} from 'react';
+import {
     Platform,
-    }=ReactNative;
-const RepoListComponent = React.createClass({
-    PropTypes: {
-        repoListURL: React.PropTypes.string,
-    },
+} from 'react-native';
 
-    handleReloadData(response) {
+import RefreshListView from './RefreshListView';
+import ExploreCell from './ExploreCell';
+
+
+export default class RepoListComponent extends Component {
+    static  propTypes = {
+        repoListURL: React.PropTypes.string,
+    }
+
+    handleReloadData = (response)=> {
         const body = response._bodyInit;
         const jsonResult = JSON.parse(body);
 
         return jsonResult;
-    },
+    }
 
-    reloadPath() {
+    reloadPath = ()=> {
         return this.props.repoListURL;
-    },
+    }
 
-    renderRow(rowData, sectionID, rowID, highlightRow) {
+    renderRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <ExploreCell trendRepo={rowData} navigator={this.props.navigator}/>
-    },
+    }
 
     render() {
         let marginTop = 44;
@@ -33,7 +36,7 @@ const RepoListComponent = React.createClass({
         }
 
         return (
-            <GHRefreshListView
+            <RefreshListView
                 style={{flex: 1, marginTop: marginTop}}
                 enablePullToRefresh={true}
                 renderRow={this.renderRow}
@@ -43,9 +46,7 @@ const RepoListComponent = React.createClass({
                 contentInset={{top: 64, left: 0, bottom: 49, right: 0}}
                 contentOffset={{x:0, y: -64}}
             >
-            </GHRefreshListView>
+            </RefreshListView>
         );
-    },
-});
-
-module.exports = RepoListComponent;
+    }
+};

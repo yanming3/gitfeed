@@ -1,6 +1,6 @@
 'use strict';
-import React,{Component,PropTypes} from 'react';
-import ReactNative,{
+import React, {Component, PropTypes} from 'react';
+import ReactNative, {
     TextInput,
     Image,
     View,
@@ -18,7 +18,7 @@ import ReactNative,{
     UIManager,
 } from 'react-native';
 
-const GHService = require('../networkService/GithubServices')
+import GHService from '../networkService/GithubServices';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../commonComponents/Colors';
 
@@ -34,22 +34,19 @@ const DEFAULT_EMAIL_ADDRESS = 'Don\'t show my email address';
 
 export default class EditProfileComponent extends Component {
 
-    //Input fields configurations.
-    static _inputFieldConfig = [];
-    static  _currentFocusedInputFieldId = '';
-    static  _isKeyboardOpen = true;
-
     // 构造
     constructor(props) {
         super(props);
         // 初始状态
+        this._inputFieldConfig = [];
+        this._currentFocusedInputFieldId = '';
+        this._isKeyboardOpen = true;
         this.state = {
             name: 'Name',
             email: 'Email',
             blog: 'Blog',
             company: 'Company',
             location: 'Location',
-            //'hireable' is original bool but use stirng to ficilitate management.
             hireable: NOT_HIREABLE_NOTE,
             bio: 'Biography',
             doneLoading: false,
@@ -115,14 +112,12 @@ export default class EditProfileComponent extends Component {
 
 
     componentDidMount = ()=> {
-        let userInfo_url = GHService.apiPath() + '/user';
-        let userEmail_url = GHService.apiPath() + '/user/emails';
+        let userInfo_url = GHService.apiPath + '/user';
+        let userEmail_url = GHService.apiPath + '/user/emails';
 
         //Get email list.
-        GHService.fetchPromise(userEmail_url)
-            .then(response => {
-                let body = response._bodyInit;
-                let emailList = JSON.parse(body);
+        GHService.fetchPromise(userEmail_url).then(response=>response.json())
+            .then(emailList => {
                 for (var i = 0; i < this._inputFieldConfig.length; i++) {
                     if (this._inputFieldConfig[i].id == 'email') {
                         emailList.map((item) => {
@@ -135,10 +130,8 @@ export default class EditProfileComponent extends Component {
 
                 //Get user info.
                 return GHService.fetchPromise(userInfo_url);
-            })
-            .then(response => {
-                let body = response._bodyInit;
-                let user = JSON.parse(body);
+            }).then(response=>response.json())
+            .then(user => {
                 this.setState({
                     name: user.name,
                     email: user.email,
@@ -168,8 +161,8 @@ export default class EditProfileComponent extends Component {
     onPressSave = ()=> {
         this.setState({doneLoading: false});
 
-        let update_url = GHService.apiPath() + '/user';
-        let addEmail_url = GHService.apiPath() + '/user/emails';
+        let update_url = GHService.apiPath + '/user';
+        let addEmail_url = GHService.apiPath + '/user/emails';
 
         //Add email.
         fetch(addEmail_url, {

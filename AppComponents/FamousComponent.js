@@ -1,80 +1,77 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Colors = require('../commonComponents/Colors');
-const ScrollableTabView = require('react-native-scrollable-tab-view');
-const DefaultTabBar = require('./DefaultTabBar');
-const GHRefreshListView = require('./GHRefreshListView');
-const UserCell = require('./UserCell');
-const LanguageComponent = require('./LanguageComponent');
-const ExploreCell = require('./ExploreCell');
-const Countries = require('../commonComponents/Countries.json');
-const Languages = require('../commonComponents/LanguageList');
-const Platform = require('Platform');
+'use strict';
 
-const {
+import React, {Component} from 'react';
+import {
     View,
     StyleSheet,
-    } = ReactNative;
+    Platform,
+} from 'react-native';
+
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import RefreshListView from './RefreshListView';
+import UserCell from './UserCell';
+import LanguageComponent from './LanguageComponent';
+import GHService from '../networkService/GithubServices';
 
 
-const FamousComponent = React.createClass({
-    _selectTab: 0,
-    _lvs: [],
+const Countries = require('../commonComponents/Countries.json');
+const Languages = require('../commonComponents/LanguageList');
 
-    getInitialState() {
+
+export default class FamousComponent extends Component {
+    _selectTab = 0;
+    _lvs = [];
+
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
         let PLACE_DEFAULT = Countries[Math.floor(Math.random() * Countries.length)];
-        return {
+        this.state = {
             toggleLanguage: false,
             currentLanguage: null,
             togglePlace: false,
             currentPlace: PLACE_DEFAULT,
-        }
-    },
+        };
+    }
 
-    _resetLoadedStatus() {
+    _resetLoadedStatus = ()=> {
         this._lvs.forEach((lv) => {
             lv.clearData();
         })
-    },
+    }
 
-    onChangeTab(tab) {
+    onChangeTab = (tab)=> {
         this._selectTab = tab.i;
         const refreshListView = this._lvs[tab.i];
         refreshListView && refreshListView.reloadDataIfNeed();
-    },
+    }
 
-    onSelectPlace(place) {
+    onSelectPlace = (place)=> {
         this.setState({
             togglePlace: false,
             currentPlace: place,
         });
 
         this._lvs[this._selectTab].reloadData();
-    },
+    }
 
-    onSelectLanguage(language) {
+    onSelectLanguage = (language)=> {
         this.setState({
             toggleLanguage: false,
             currentLanguage: language,
         });
 
         this._lvs[this._selectTab].reloadData();
-    },
+    }
 
-    _basePath() {
-        let apiPath = GHService.apiPath() + '/search/users?q=';
-        return apiPath;
-    },
-
-    _isNotUsingDefaultLanguage() {
+    _isNotUsingDefaultLanguage = ()=> {
         const currentLan = this.state.currentLanguage;
         return currentLan && currentLan != 'All Languages';
-    },
+    }
 
-    reloadPlacePath() {
-        let path = this._basePath();
+    reloadPlacePath = ()=> {
+        let path = GHService.famousPath;
         path += 'location:' + this.state.currentPlace;
 
         if (this._isNotUsingDefaultLanguage()) {
@@ -82,13 +79,12 @@ const FamousComponent = React.createClass({
         }
 
         path += '&sort=followers';
-        console.log('place path', path);
 
         return path;
-    },
+    }
 
-    reloadWorldPath() {
-        let path = this._basePath();
+    reloadWorldPath = ()=> {
+        let path = GHService.famousPath;
 
         if (this._isNotUsingDefaultLanguage()) {
             path += '+language:' + this.state.currentLanguage;
@@ -98,9 +94,9 @@ const FamousComponent = React.createClass({
         }
 
         return path;
-    },
+    }
 
-    handleReloadData(value) {
+    handleReloadData = (value)=> {
         return new Promise((resolve, reject) => {
             value.json().then(responseData=> {
                 resolve(responseData.items);
@@ -109,21 +105,20 @@ const FamousComponent = React.createClass({
                 resolve([]);
             })
         });
-    },
+    }
 
-    renderUserRow(rowData, sectionID, rowID, highlightRow) {
+    renderUserRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <UserCell key={rowID} user={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
     render() {
         let scv;
         if (this._isNotUsingDefaultLanguage()) {
             scv = (
                 <ScrollableTabView
-                    renderTabBar={() => <DefaultTabBar/>}
                     initialPage={0}
                     onChangeTab={this.onChangeTab}>
-                    <GHRefreshListView
+                    <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[0] = cp}
                         tabLabel={this.state.currentPlace}
@@ -132,8 +127,8 @@ const FamousComponent = React.createClass({
                         handleReloadData={this.handleReloadData}
                         navigator={this.props.navigator}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[1] = cp}
                         tabLabel="World"
@@ -142,12 +137,12 @@ const FamousComponent = React.createClass({
                         handleReloadData={this.handleReloadData}
                         navigator={this.props.navigator}
                     >
-                    </GHRefreshListView>
+                    </RefreshListView>
                 </ScrollableTabView>
             )
         } else {
             scv = (
-                <GHRefreshListView
+                <RefreshListView
                     enablePullToRefresh={true}
                     ref={(cp) => this._lvs[0] = cp}
                     tabLabel={this.state.currentPlace}
@@ -156,7 +151,7 @@ const FamousComponent = React.createClass({
                     handleReloadData={this.handleReloadData}
                     navigator={this.props.navigator}
                 >
-                </GHRefreshListView>
+                </RefreshListView>
             )
         }
         let top = 64;
@@ -166,25 +161,27 @@ const FamousComponent = React.createClass({
 
         return (
             <View style={[styles.container, {paddingTop: top}]}>
-                <LanguageComponent
-                    languageList={Countries}
-                    onSelectLanguage={this.onSelectPlace}
-                    currentLanguage={this.state.currentPlace}
-                />
-                <LanguageComponent
-                    onSelectLanguage={this.onSelectLanguage}
-                    languageList={Languages}
-                />
+                <View style={{flexDirection:'row',justifyContent:'center'}}>
+                    <LanguageComponent
+                        languageList={Countries}
+                        onSelectLanguage={this.onSelectPlace}
+                        currentLanguage={this.state.currentPlace}
+                    />
+                    <LanguageComponent
+                        onSelectLanguage={this.onSelectLanguage}
+                        languageList={Languages}
+                    />
+                </View>
                 {scv}
             </View>
         )
     }
-});
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 64,
+        flexDirection: 'column',
         backgroundColor: 'white',
     },
     tabView: {
@@ -193,5 +190,3 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.01)',
     },
 });
-
-module.exports = FamousComponent;

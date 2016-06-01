@@ -1,6 +1,6 @@
 'use strict';
 
-const colors = {
+export default {
     lineGray: '#F0F0F0',
     green: '#80BD01',
     backGray: '#E5E5E5',
@@ -13,7 +13,5 @@ const colors = {
     borderColor: '#E2E2E2',
     black: '#586872',
     blue: '#4078c0',
-    lightGray:'rgb(211, 211, 211)',
-}
-
-export default {colors}
+    lightGray: 'rgb(211, 211, 211)',
+};

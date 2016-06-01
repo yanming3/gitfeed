@@ -1,10 +1,7 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const Icon = require('react-native-vector-icons/Ionicons');
-const Colors = require('../commonComponents/Colors');
-const GHService = require('../networkService/GithubServices');
+'use strict';
 
-const {
+import React,{Component,PropTypes} from 'react';
+import {
     StyleSheet,
     WebView,
     View,
@@ -15,7 +12,11 @@ const {
     ProgressBarAndroid,
     ActivityIndicatorIOS,
     Platform,
-    } = ReactNative;
+} from 'react-native';
+
+import Icon from 'react-native-vector-icons/Ionicons';
+import Colors from '../commonComponents/Colors';
+import GHService from '../networkService/GithubServices';
 
 const hideJS = `
   ;(function GHHide() {
@@ -37,176 +38,35 @@ const hideJS = `
      );
 `;
 
-const GithubWebComponent = React.createClass({
-    _isRepo: false,
-    _debugTime: 0,
 
-    PropTypes: {
-        webURL: React.PropTypes.string,
-        param: React.PropTypes.object,
-    },
-
-    getInitialState() {
-        let url = this.props.webURL;
-        if (url && !url.match(/^[a-zA-Z]+:\/\//)) {
-            url = 'http://' + url;
-        }
-
-        return {
-            URL: url,
-            backAble: false,
-            forwardAble: false,
-            refreshAble: false,
-        }
-    },
-
-    onNavigationStateChange(e) {
-        console.log(e.url + 'loading takes' + (Date.now() - this._debugTime) / 1000 + 's');
-        this._debugTime = Date.now();
-
-        const title = e.title;
-        const URLNeedChanged = title.indexOf('Page not found') >= 0 && this._isRepo;
-        let url = e.url;
-        if (URLNeedChanged) {
-            const repoName = this.props.param.full_name || this.props.param.name;
-            const path = GHService.apiPath() + '/repos/' + repoName + '/readme';
-            GHService.fetchPromise(path)
-                .then(value => {
-                    console.log('web value is', value);
-                    if (value.status < 400) {
-                        const json = JSON.parse(value._bodyInit);
-                        const fixURL = json.html_url;
-
-                        if (fixURL) {
-                            this.setState({
-                                URL: fixURL,
-                                backAble: e.canGoBack,
-                                forwardAble: e.canGoForward,
-                                refreshAble: !e.loading && title.length > 0
-                            });
-                        }
-                    }
-                })
-        } else {
-            this.setState({
-                URL: url,
-                backAble: e.canGoBack,
-                forwardAble: e.canGoForward,
-                refreshAble: !e.loading && title.length > 0
-            });
-        }
-    },
-
-    onShare() {
-        const message = '';
-
-        ActionSheetIOS.showShareActionSheetWithOptions({
-                message: message,
-                url: this.state.URL,
-            },
-            () => {
-            },
-            () => {
-            });
-    },
-
-    componentWillMount() {
-        this._debugTime = Date.now();
-
-        const originURL = this.props.webURL;
-        const isRepo = originURL && originURL.indexOf('/blob/master') > 0;
-        this._isRepo = isRepo;
-
-        this.props.route.onShare = this.onShare;
-    },
-
-    renderLoading() {
-        if (Platform.OS === 'android') {
-            return (
-                <View style={styles.container}>
-                    <ProgressBarAndroid styleAttr="Inverse"/>
-                </View>
-            )
-        } else if (Platform.OS === 'ios') {
-            return (
-                <View style={styles.container}>
-                    <ActivityIndicatorIOS size="large"/>
-                </View>
-            );
-        }
-    },
-
-    render() {
-        let repoToolBar;
-        let topInset = 64;
-        if (this._isRepo) {
-            repoToolBar = <RepoToolBar
-                URL={this.props.param.url}
-                navigator={this.props.navigator}/>;
-            topInset = 0;
-        }
-
-        let webToolBar;
-        if (this.state.backAble || this.state.forwardAble) {
-            webToolBar = (
-                <WebToolBar
-                    goBack={() => this.webView.goBack()}
-                    goForward={() => this.webView.goForward()}
-                    onRefresh={() => this.webView.reload()}
-                    backAble={this.state.backAble}
-                    forwardAble={this.state.forwardAble}
-                    refreshAble={this.state.refreshAble}
-                />
-            )
-        }
-
-        return (
-            <View style={{flex: 1}}>
-                {repoToolBar}
-                <WebView
-                    ref={(webView) => this.webView = webView}
-                    styles={{flex: 1}}
-                    source={{uri:this.state.URL}}
-                    onNavigationStateChange={this.onNavigationStateChange}
-                    injectedJavaScript={hideJS}
-                    automaticallyAdjustContentInsets={false}
-                    contentInset={{top: topInset, left: 0, bottom: 49, right: 0}}
-                    renderLoading={this.renderLoading}
-                    javaScriptEnabled={true}
-                    startInLoadingState={true}>
-                </WebView>
-                {webToolBar}
-            </View>
-        )
-    },
-});
-
-const RepoToolBar = React.createClass({
-    _repoRes: {
+class RepoToolBar extends Component {
+    _repoRes = {
         full_name: null,
         subscribers_url: null,
         stargazers_url: null,
-    },
+    }
 
-    PropTypes: {
-        URL: React.PropTypes.string,
-    },
+    static PropTypes = {
+        URL: PropTypes.string,
+    }
 
-    getInitialState() {
-        return {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             watchNumber: '...',
             starNumber: '...',
             forkNumber: '...',
             watchStatus: 'Watch',
             starStatus: 'Star',
-        }
-    },
+        };
+    }
 
-    componentDidMount() {
-        GHService.fetchPromise(this.props.URL)
-            .then(value => {
-                console.log('value', value);
-                const res = JSON.parse(value._bodyInit);
+    componentDidMount = ()=> {
+        GHService.fetchPromise(this.props.URL).then(response=>response.json())
+            .then(res => {
+                console.log('value', res);
                 if (!res) return;
 
                 this.setState({
@@ -249,9 +109,9 @@ const RepoToolBar = React.createClass({
             .catch(err => {
                 console.log('WebCompononent Error', err);
             })
-    },
+    }
 
-    onPressWatch() {
+    onPressWatch = ()=> {
         const fullName = this._repoRes.full_name;
         if (!fullName) return;
 
@@ -277,9 +137,9 @@ const RepoToolBar = React.createClass({
 
         GHService.checkNeedLoginWithPromise(watchQuery, this.props.navigator);
 
-    },
+    }
 
-    onPressWatchers() {
+    onPressWatchers = ()=> {
         const url = this._repoRes.subscribers_url;
         if (!url) return;
 
@@ -289,9 +149,9 @@ const RepoToolBar = React.createClass({
         }
         this.props.navigator.push({id: 'userList', obj: user});
 
-    },
+    }
 
-    onPressStar() {
+    onPressStar = ()=> {
         const fullName = this._repoRes.full_name;
         if (!fullName) return;
 
@@ -316,9 +176,9 @@ const RepoToolBar = React.createClass({
 
         GHService.checkNeedLoginWithPromise(starQuery, this.props.navigator);
 
-    },
+    }
 
-    onPressStarers() {
+    onPressStarers = ()=> {
         const url = this._repoRes.stargazers_url;
         if (!url) return;
 
@@ -328,7 +188,7 @@ const RepoToolBar = React.createClass({
         }
         this.props.navigator.push({id: 'userList', obj: user});
 
-    },
+    }
 
     render() {
         console.log('user is', this._repoRes);
@@ -380,16 +240,18 @@ const RepoToolBar = React.createClass({
             </View>
         )
     }
-});
+}
+;
 
-const ActionComponent = React.createClass({
-    PropTypes: {
-        iconName: React.PropTypes.string,
-        actionName: React.PropTypes.string,
-        actionNumber: React.PropTypes.string,
-        onPressAction: React.PropTypes.func,
-        onPressNumbers: React.PropTypes.func,
-    },
+class ActionComponent extends Component {
+    static propTypes = {
+        iconName: PropTypes.string,
+        actionName: PropTypes.string,
+        actionNumber: PropTypes.string,
+        onPressAction: PropTypes.func,
+        onPressNumbers: PropTypes.func,
+    }
+
     render() {
         return (
             <View style={styles.action}>
@@ -418,30 +280,31 @@ const ActionComponent = React.createClass({
             </View>
         )
     }
-});
+}
+
 
 const iconSize = 30;
-const WebToolBar = React.createClass({
-    PropTypes: {
-        goBack: React.PropTypes.func,
-        goForward: React.PropTypes.func,
-        onRefresh: React.PropTypes.func,
-        backAble: React.PropTypes.bool,
-        forwardAble: React.PropTypes.bool,
-        refreshAble: React.PropTypes.bool,
-    },
+class WebToolBar extends Component {
+    static propTypes = {
+        goBack: PropTypes.func,
+        goForward: PropTypes.func,
+        onRefresh: PropTypes.func,
+        backAble: PropTypes.bool,
+        forwardAble: PropTypes.bool,
+        refreshAble: PropTypes.bool,
+    };
 
-    goBack() {
+    goBack = ()=> {
         this.props.backAble && this.props.goBack && this.props.goBack();
-    },
+    }
 
-    goForward() {
+    goForward = ()=> {
         this.props.forwardAble && this.props.goForward && this.props.goForward();
-    },
+    }
 
-    onRefresh() {
+    onRefresh = ()=> {
         this.props.refreshAble && this.props.onRefresh && this.props.onRefresh();
-    },
+    }
 
     render() {
         const backOpacity = this.props.backAble ? 0.5 : 1.0;
@@ -496,10 +359,155 @@ const WebToolBar = React.createClass({
                     />
                 </TouchableOpacity>
             </View>
+        );
+    }
+}
+
+export default class GithubWebComponent extends Component {
+    _isRepo = false;
+    _debugTime = 0;
+
+    static propTypes = {
+        webURL: PropTypes.string,
+        param: PropTypes.object,
+    }
+
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        let url = this.props.webURL;
+        if (url && !url.match(/^[a-zA-Z]+:\/\//)) {
+            url = 'http://' + url;
+        }
+        this.state = {
+            URL: url,
+            backAble: false,
+            forwardAble: false,
+            refreshAble: false,
+        };
+    }
+
+    onNavigationStateChange = (e)=> {
+        console.log(e.url + 'loading takes' + (Date.now() - this._debugTime) / 1000 + 's');
+        this._debugTime = Date.now();
+
+        const title = e.title;
+        const URLNeedChanged = title.indexOf('Page not found') >= 0 && this._isRepo;
+        let url = e.url;
+        if (URLNeedChanged) {
+            const repoName = this.props.param.full_name || this.props.param.name;
+            const path = GHService.apiPath + '/repos/' + repoName + '/readme';
+            GHService.fetchPromise(path)
+                .then(value => {
+                    console.log('web value is', value);
+                    if (value.status < 400) {
+                        const json = JSON.parse(value._bodyInit);
+                        const fixURL = json.html_url;
+
+                        if (fixURL) {
+                            this.setState({
+                                URL: fixURL,
+                                backAble: e.canGoBack,
+                                forwardAble: e.canGoForward,
+                                refreshAble: !e.loading && title.length > 0
+                            });
+                        }
+                    }
+                })
+        } else {
+            this.setState({
+                URL: url,
+                backAble: e.canGoBack,
+                forwardAble: e.canGoForward,
+                refreshAble: !e.loading && title.length > 0
+            });
+        }
+    }
+
+    onShare = ()=> {
+        const message = '';
+
+        ActionSheetIOS.showShareActionSheetWithOptions({
+                message: message,
+                url: this.state.URL,
+            },
+            () => {
+            },
+            () => {
+            });
+    }
+
+    componentWillMount = ()=> {
+        this._debugTime = Date.now();
+
+        const originURL = this.props.webURL;
+        const isRepo = originURL && originURL.indexOf('/blob/master') > 0;
+        this._isRepo = isRepo;
+
+        this.props.route.onShare = this.onShare;
+    }
+
+    renderLoading = ()=> {
+        if (Platform.OS === 'android') {
+            return (
+                <View style={styles.container}>
+                    <ProgressBarAndroid styleAttr="Inverse"/>
+                </View>
+            )
+        } else if (Platform.OS === 'ios') {
+            return (
+                <View style={styles.container}>
+                    <ActivityIndicatorIOS size="large"/>
+                </View>
+            );
+        }
+    }
+
+    render() {
+        let repoToolBar;
+        let topInset = 64;
+        if (this._isRepo) {
+            repoToolBar = <RepoToolBar
+                URL={this.props.param.url}
+                navigator={this.props.navigator}/>;
+            topInset = 0;
+        }
+
+        let webToolBar;
+        if (this.state.backAble || this.state.forwardAble) {
+            webToolBar = (
+                <WebToolBar
+                    goBack={() => this.webView.goBack()}
+                    goForward={() => this.webView.goForward()}
+                    onRefresh={() => this.webView.reload()}
+                    backAble={this.state.backAble}
+                    forwardAble={this.state.forwardAble}
+                    refreshAble={this.state.refreshAble}
+                />
+            )
+        }
+
+        return (
+            <View style={{flex: 1}}>
+                {repoToolBar}
+                <WebView
+                    ref={(webView) => this.webView = webView}
+                    styles={{flex: 1}}
+                    source={{uri:this.state.URL}}
+                    onNavigationStateChange={this.onNavigationStateChange}
+                    injectedJavaScript={hideJS}
+                    automaticallyAdjustContentInsets={false}
+                    contentInset={{top: topInset, left: 0, bottom: 49, right: 0}}
+                    renderLoading={this.renderLoading}
+                    javaScriptEnabled={true}
+                    startInLoadingState={true}>
+                </WebView>
+                {webToolBar}
+            </View>
         )
     }
-});
-
+};
 var styles = StyleSheet.create({
     repoToolBar: {
         backgroundColor: '#FAFAFA',
@@ -579,5 +587,3 @@ var styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
-
-module.exports = GithubWebComponent;

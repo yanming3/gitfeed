@@ -1,10 +1,6 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Colors = require('../commonComponents/Colors');
-const ErrorPlaceholder = require('../commonComponents/ErrorPlacehoderComponent');
+import React, {Component,PropTypes} from 'react';
 
-const {
+import {
     ListView,
     View,
     ActivityIndicatorIOS,
@@ -12,26 +8,62 @@ const {
     StyleSheet,
     TouchableOpacity,
     Image,
-    } = ReactNative;
+    RecyclerViewBackedScrollView,
+    AsyncStorage,
+} from 'react-native';
 
-const SHOW_CASE_PATH = 'http://trending.codehub-app.com/v2/showcases';
+import Colors from '../commonComponents/Colors';
+import ErrorPlaceholder from '../commonComponents/ErrorPlacehoderComponent';
+import GHService from './../networkService/GithubServices';
 
-const FloorListView = React.createClass({
-    getInitialState() {
+class ShowcaseCell extends Component {
+    static propTypes = {
+        showcase: PropTypes.object,
+        height: PropTypes.number,
+    };
+
+    onSelectCell = ()=> {
+        this.props.navigator.push({id: 'showcase', obj: this.props.showcase});
+    }
+
+    render() {
+        const showcase = this.props.showcase;
+
+        return (
+            <TouchableOpacity
+                style={[styles.container, {height: this.props.height}]}
+                onPress={this.onSelectCell}
+                underlayColor={Colors.lightGray}>
+                <Image
+                    style={styles.showcase}
+                    source={{uri: showcase.image_url}}
+                    resizeMode={'cover'}
+                >
+                    <Text style={styles.showcaseName}>{showcase.name}</Text>
+                </Image>
+            </TouchableOpacity>
+        );
+    }
+}
+
+export default class ShowCasesComponent extends Component {
+    // 构造
+    constructor(props) {
+        super(props);
         const dataSourceParam = {
             rowHasChanged: (row1, row2) => row1 !== row2,
             sectionHeaderHasChanged: (s1, s2) => s1 !== s2,
         }
         const dataSource = new ListView.DataSource(dataSourceParam);
-
-        return {
+        // 初始状态
+        this.state = {
             dataSource: dataSource,
             lastError: null,
             loading: false,
         };
-    },
+    }
 
-    reloadData() {
+    reloadData = ()=> {
         if (this.state.loading) {
             return;
         }
@@ -40,16 +72,17 @@ const FloorListView = React.createClass({
             loading: true,
             lastError: null
         });
-
-        fetch(SHOW_CASE_PATH)
-            .then(response=>response.json())
+        console.log("begin to load showCases data");
+        GHService.loadShowCasesWithCache()
             .then(responseData => {
-                let cases = this._shuffle(responseData);
+                console.log("showCases data is :", responseData);
+                //let cases = this._shuffle(responseData);
                 this.setState({
-                    dataSource: this.state.dataSource.cloneWithRows(cases),
+                    dataSource: this.state.dataSource.cloneWithRows(responseData),
                 });
             })
             .catch(err => {
+                console.error("showcase error:", err);
                 this.setState({
                     lastError: err
                 });
@@ -59,32 +92,13 @@ const FloorListView = React.createClass({
                     loading: false,
                 });
             })
-    },
+    }
 
-    _shuffle(array) {
-        let currentIndex = array.length, temporaryValue, randomIndex;
-
-        // While there remain elements to shuffle...
-        while (0 !== currentIndex) {
-
-            // Pick a remaining element...
-            randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex -= 1;
-
-            // And swap it with the current element.
-            temporaryValue = array[currentIndex];
-            array[currentIndex] = array[randomIndex];
-            array[randomIndex] = temporaryValue;
-        }
-
-        return array;
-    },
-
-    componentDidMount() {
+    componentDidMount = ()=> {
         this.reloadData();
-    },
+    }
 
-    renderRow(rowData, sectionID, rowID, highlightRow) {
+    renderRow = (rowData, sectionID, rowID, highlightRow)=> {
         return (
             <ShowcaseCell
                 key={rowID}
@@ -93,7 +107,7 @@ const FloorListView = React.createClass({
                 navigator={this.props.navigator}
             />
         )
-    },
+    }
 
     render() {
         if (this.state.loading) {
@@ -119,43 +133,18 @@ const FloorListView = React.createClass({
                     horizontal={true}
                     dataSource={this.state.dataSource}
                     renderRow={this.renderRow}
-                    automaticallyAdjustContentInsets={false}
-                    showsHorizontalScrollIndicator={false}
+                    automaticallyAdjustContentInsets={true}
+                    showsHorizontalScrollIndicator={true}
+                    initialListSize={5}
+                    pageSize={5}
+                    scrollEnabled={true}
+                    scrollsToTop={true}
                 />
             </View>
         );
-    },
-});
+    }
+};
 
-const ShowcaseCell = React.createClass({
-    propTypes: {
-        showcase: React.PropTypes.object,
-        height: React.PropTypes.number,
-    },
-
-    onSelectCell() {
-        this.props.navigator.push({id: 'showcase', obj: this.props.showcase});
-    },
-
-    render() {
-        const showcase = this.props.showcase;
-
-        return (
-            <TouchableOpacity
-                style={[styles.container, {height: this.props.height}]}
-                onPress={this.onSelectCell}
-                underlayColor={Colors.lightGray}>
-                <Image
-                    style={styles.showcase}
-                    source={{uri: showcase.image_url}}
-                    resizeMode={'cover'}
-                >
-                    <Text style={styles.showcaseName}>{showcase.name}</Text>
-                </Image>
-            </TouchableOpacity>
-        );
-    },
-});
 
 const styles = StyleSheet.create({
     container: {
@@ -181,5 +170,3 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
 });
-
-module.exports = FloorListView;

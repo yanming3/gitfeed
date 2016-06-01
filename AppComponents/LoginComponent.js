@@ -1,11 +1,5 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const Colors = require('../commonComponents/Colors');
-const CommonStyles = require('../commonComponents/CommonStyles');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const GHService = require('../networkService/GithubServices')
-
-const {
+import React,{Component,PropTypes} from 'react';
+import {
     StyleSheet,
     ActivityIndicatorIOS,
     View,
@@ -14,26 +8,33 @@ const {
     TextInput,
     ProgressBarAndroid,
     Platform,
-    } = ReactNative;
+} from 'react-native';
+
+import Colors from '../commonComponents/Colors';
+import GHService from '../networkService/GithubServices';
 
 
-const LoginComponent = React.createClass({
-    PropTypes: {
+export default class LoginComponent extends Component {
+    static PropTypes = {
         /* A next action promise */
         nextPromise: React.PropTypes.object,
         didLogin: React.PropTypes.func,
-    },
+    }
 
-    getInitialState() {
-        return {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             username: GHService.currentUser().login,
             password: GHService.currentUser().password,
             logining: false,
             loginError: null,
-        }
-    },
+        };
+    }
 
-    submitLogin() {
+
+    submitLogin = ()=> {
         if (this.state.logining) return;
         const state = this.state;
         if (state.username.length == 0 || state.password.length == 0) {
@@ -64,23 +65,23 @@ const LoginComponent = React.createClass({
                     logining: false,
                 });
             })
-    },
+    }
 
-    onNameChange(text) {
+    onNameChange = (text)=> {
         this.setState({
             username: text,
         });
-    },
+    }
 
-    onPwdChange(text) {
+    onPwdChange = (text)=> {
         this.setState({
             password: text,
         });
-    },
+    }
 
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate = (nextProps, nextState)=> {
         return this.state.logining != nextState.logining;
-    },
+    }
 
     render() {
         let signInCp;
@@ -164,8 +165,8 @@ const LoginComponent = React.createClass({
                 </View>
             </View>
         )
-    },
-});
+    }
+}
 
 const styles = StyleSheet.create({
     loginCard: {
@@ -244,5 +245,3 @@ const styles = StyleSheet.create({
         marginTop: 40,
     }
 });
-
-module.exports = LoginComponent

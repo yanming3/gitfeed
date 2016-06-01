@@ -1,42 +1,46 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Colors = require('../commonComponents/Colors');
-const GHRefreshListView = require('./GHRefreshListView');
-const ExploreCell = require('./ExploreCell');
-const Platform = require('Platform');
+'use strict';
 
-const {
+import React, {Component, PropTypes} from 'react';
+import {
     View,
     Text,
     StyleSheet,
     Image,
-    } = ReactNative;
+    Platform,
+} from 'react-native';
+
+import CommonComponents from '../commonComponents/CommonComponents';
+import Colors from '../commonComponents/Colors';
+import RefreshListView from './RefreshListView';
+import ExploreCell from './ExploreCell';
+
 
 const TREND_BASE_PATH = 'http://trending.codehub-app.com/v2/showcases/';
 
-const OrgComponent = React.createClass({
-    propTypes: {
-        showcase: React.PropTypes.object,
-    },
+export default class ShowcaseItem extends Component {
+    static propTypes = {
+        showcase: PropTypes.object,
+    }
 
-    reloadPath() {
-        const path = TREND_BASE_PATH + this.props.showcase.slug;
-        console.log('showcase path', path);
-        return path;
-    },
+    reloadPath = ()=> {
+        return  TREND_BASE_PATH + this.props.showcase.slug;
+    }
 
-    handleReloadData(value) {
-        value.json().then(responseData=> {
-            return responseData.repositories;
-        })
-    },
-
-    renderRepo(rowData, sectionID, rowID, highlightRow) {
+    handleReloadData = (value)=> {
+        return new Promise((resolve, reject)=> {
+            value.json().then(responseData=> {
+                resolve(responseData.repositories);
+            }).catch(err=> {
+                console.log(err);
+                reject(err);
+            });
+        });
+    }
+    renderRepo = (rowData, sectionID, rowID, highlightRow)=> {
         return <ExploreCell key={rowID} trendRepo={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
-    renderHeader() {
+    renderHeader = ()=> {
         const showcase = this.props.showcase;
         return (
             <View style={styles.header}>
@@ -53,7 +57,7 @@ const OrgComponent = React.createClass({
                 {CommonComponents.renderSepLine()}
             </View>
         )
-    },
+    }
 
     render() {
         let top = 64;
@@ -62,7 +66,7 @@ const OrgComponent = React.createClass({
         }
         return (
             <View style={{backgroundColor: 'white', paddingTop: top, flex: 1}}>
-                <GHRefreshListView
+                <RefreshListView
                     enablePullToRefresh={false}
                     renderRow={this.renderRepo}
                     reloadPromisePath={this.reloadPath}
@@ -70,11 +74,11 @@ const OrgComponent = React.createClass({
                     navigator={this.props.navigator}
                     renderHeader={this.renderHeader}
                 >
-                </GHRefreshListView>
+                </RefreshListView>
             </View>
         )
     }
-});
+};
 
 const styles = StyleSheet.create({
     header: {
@@ -100,5 +104,3 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 });
-
-module.exports = OrgComponent;

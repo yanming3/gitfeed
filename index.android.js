@@ -1,24 +1,20 @@
 'use strict';
 
-import React,{Component} from 'react';
+import React, {Component} from 'react';
 
 import {
-    Text,
     AppRegistry,
 } from 'react-native';
 
 //const CODE_PUSH_PRODUCTION_KEY = "7sCNpYjMHV89MyTvVwu5bhvWRQcLE1Z_BgAMb";
 //const codePush = require('react-native-code-push');
 
-const Routes = require('./AppComponents/Routes');
-const RootTab = require('./AppComponents/RootTabComponent');
-const GHService = require('./networkService/GithubServices');
-const CommonComponents = require('./commonComponents/CommonComponents');
-const OnboardComponent = require('./AppComponents/OnboardComponent');
-const LoginComponent = require('./AppComponents/LoginComponent');
+import RootTab from './AppComponents/RootTabComponent';
+import CommonComponents from './commonComponents/CommonComponents';
+import OnboardComponent from './AppComponents/OnboardComponent';
+import LoginComponent from './AppComponents/LoginComponent';
 
-const FeedComponent = require('./AppComponents/FeedComponent');
-
+import GHService from './networkService/GithubServices';
 
 const LoginState = {
     pending: 0,
@@ -27,7 +23,7 @@ const LoginState = {
     needLogin: 3,
 }
 
-class GitFeedApp extends Component {
+class GitFeed extends Component {
     // 构造
     constructor(props) {
         super(props);
@@ -72,7 +68,9 @@ class GitFeedApp extends Component {
 
     didOnboard = (user, needLogin)=> {
         let lst = user == null ? LoginState.unOnboard : LoginState.onboard;
-        if (needLogin) lst = LoginState.needLogin;
+        if (needLogin) {
+            lst = LoginState.needLogin;
+        }
         this.setState({
             userState: lst,
         });
@@ -113,4 +111,4 @@ class GitFeedApp extends Component {
     }
 }
 
-AppRegistry.registerComponent('GitFeed', () =>GitFeedApp);
+AppRegistry.registerComponent('GitFeed', () =>GitFeed);

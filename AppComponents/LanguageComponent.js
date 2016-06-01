@@ -1,45 +1,46 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Languages = require('../commonComponents/LanguageList');
-const Colors = require('../commonComponents/Colors');
-
-const {
+'use strict';
+import React,{Component,PropTypes} from 'react';
+import {
     View,
     Text,
-    TouchableHighlight,
     StyleSheet,
     TouchableOpacity,
     Picker,
     Platform,
-    } = ReactNative;
+    UIManager,
+} from 'react-native';
 
-const CONTAINERREF = 'container';
+import Colors from '../commonComponents/Colors';
+const Languages = require('../commonComponents/LanguageList');
 
-const FloorListView = React.createClass({
-    propTypes: {
+const CONTAINER_REF = 'container';
+
+export default class LanguageComponent extends Component {
+
+    static propTypes = {
         toggleOn: React.PropTypes.bool,
         languageList: React.PropTypes.array,
         onSelectLanguage: React.PropTypes.func,
         currentLanguage: React.PropTypes.string,
-    },
+    };
 
-    getDefaultProps() {
-        return {
-            languageList: Languages,
-            toggleOn: false,
-            currentLanguage: 'All Languages',
-        }
-    },
+    static defaultProps={
+        languageList: Languages,
+        toggleOn: false,
+        currentLanguage: 'All Languages',
+    };
 
-    getInitialState() {
-        return {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             toggleOn: this.props.toggleOn,
             currentLanguage: this.props.currentLanguage,
-        }
-    },
+        };
+    }
 
-    onSelectLanguage(selectedLanguage) {
+    onSelectLanguage = (selectedLanguage)=> {
         if (this.state.currentLanguage == selectedLanguage) {
             this.setState({
                 toggleOn: false,
@@ -53,7 +54,7 @@ const FloorListView = React.createClass({
             currentLanguage: selectedLanguage,
         });
         this.props.onSelectLanguage(selectedLanguage);
-    },
+    }
 
     render() {
         const languageList = this.props.languageList;
@@ -65,22 +66,21 @@ const FloorListView = React.createClass({
                     <TouchableOpacity
                         style={styles.chooseLan}
                         onPress={() => this.setState({
-              toggleOn: true,
-            })}>
+                            toggleOn: true,
+                          })}>
                         <Text style={styles.lan}>
                             {selectedLanguage}
                         </Text>
                     </TouchableOpacity>
                 );
             } else {
-                const pickerHeight = require('NativeModules').UIManager.RCTPicker.Constants.height;
+                const pickerHeight = UIManager.RCTPicker.Constants.height;
                 return (
-                    <View style={{height: pickerHeight}} ref={CONTAINERREF}>
+                    <View style={{height: pickerHeight}} ref={CONTAINER_REF}>
                         <Picker
                             selectedValue={selectedLanguage}
                             onValueChange={this.onSelectLanguage}
-                            mode={'dropdown'}
-                        >
+                            mode={'dropdown'}>
                             {this.props.languageList.map((obj, index) => {
                                 return (
                                     <Picker.Item key={index} label={obj} value={obj}/>
@@ -90,8 +90,8 @@ const FloorListView = React.createClass({
                         <TouchableOpacity
                             style={styles.chooseLan}
                             onPress={() => this.setState({
-                toggleOn: false,
-              })}>
+                                toggleOn: false,
+                              })}>
                             <Text style={styles.lan}>
                                 Cancel
                             </Text>
@@ -105,8 +105,7 @@ const FloorListView = React.createClass({
                     selectedValue={selectedLanguage}
                     onValueChange={this.onSelectLanguage}
                     mode={'dropdown'}
-                    style={{width: 150, alignSelf: 'center', height: 40}}
-                >
+                    style={{width: 150, height: 40}}>
                     {this.props.languageList.map((obj, index) => {
                         return (
                             <Picker.Item key={index} label={obj} value={obj}/>
@@ -115,52 +114,10 @@ const FloorListView = React.createClass({
                 </Picker>
             )
         }
-    },
-});
-
-const ICON_SIZE = 20;
-
-const LanguageCell = React.createClass({
-    propTypes: {
-        name: React.PropTypes.string,
-        onSelectCell: React.PropTypes.func,
-    },
-
-    onSelectCell() {
-        this.props.onSelectCell && this.props.onSelectCell(this.props.name);
-    },
-
-    render() {
-        return (
-            <TouchableHighlight onPress={this.onSelectCell} underlayColor={Colors.lightGray}>
-                <View style={styles.cellContentView}>
-                    <Text style={styles.userName}>{this.props.name}</Text>
-                </View>
-            </TouchableHighlight>
-        );
-    },
-});
+    }
+}
 
 const styles = StyleSheet.create({
-    cellContentView: {
-        flexDirection: 'row',
-        height: 44,
-        alignItems: 'center',
-        borderColor: Colors.borderColor,
-        borderBottomWidth: 0.5,
-    },
-    userName: {
-        color: 'black',
-        fontWeight: 'bold',
-        fontSize: 17,
-        marginLeft: 20,
-        flex: 1,
-    },
-    cellLeftRepoIcon: {
-        width: ICON_SIZE,
-        height: ICON_SIZE,
-        marginRight: 8,
-    },
     lan: {
         color: Colors.blue,
         fontSize: 16,
@@ -176,4 +133,3 @@ const styles = StyleSheet.create({
     },
 });
 
-module.exports = FloorListView;

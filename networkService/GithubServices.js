@@ -1,16 +1,21 @@
-const config = require('../config');
-const {EventEmitter} = require('events');
-const React = require('react-native');
-const base64 = require('base-64');
+'use strict';
 
-const {
+import {
     AsyncStorage,
     Navigator,
-    } = React;
+    DeviceEventEmitter,
+} from 'react-native';
+
+const config = require('../config');
+const base64 = require('base-64');
+
 
 const API_PATH = 'https://api.github.com';
 const AUTH_URL_PATH = API_PATH + '/authorizations';
 const GH_USER_KEY = 'GH_USER_KEY';
+const SHOW_CASE_PATH = 'http://trending.codehub-app.com/v2/showcases';
+const SHOW_CASE_KEY = "SHOW_CASE";
+
 const EMPTY_TOKEN = {
     id: '',
     token: ''
@@ -30,74 +35,108 @@ let GLOBAL_USER = EMPTY_USER;
  1. onboard (just enter username)
  2. login (will has the accessToken)
  */
-class GithubService extends EventEmitter {
-    constructor() {
-        super();
-    }
+export default class GithubService {
 
-    apiPath() {
+    static get apiPath() {
         return API_PATH;
     }
 
-    queryLoginState() {
+    static get feedsPath() {
+        return GithubService.apiPath + '/users/' + GLOBAL_USER.login + '/received_events';
+    }
+
+    static get famousPath() {
+        return GithubService.apiPath + '/search/users?q=';
+    }
+
+    static loadCache(cacheKey) {
+        return AsyncStorage.getItem(cacheKey);
+    }
+
+    static saveCache(cacheKey, obj) {
+        return AsyncStorage.setItem(cacheKey, JSON.stringify(obj));
+    }
+
+    static loadShowCasesWithCache() {
+        return new Promise((resolve, reject)=> {
+            AsyncStorage.getItem(SHOW_CASE_KEY)
+                .then(result => {
+                    if (result) {
+                        console.log("find showCases in cache");
+                        resolve(JSON.parse(result));
+                    }
+                    else {
+                        console.log("no find showCases in cache,do network query!");
+                        fetch(SHOW_CASE_PATH)
+                            .then(response=>response.json()).then(responseData=> {
+                            resolve(responseData);
+                        }).catch(err=> {
+                            reject(err);
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('loadShowCasesWithCache error: ', err);
+                    reject(err);
+                });
+        });
+    }
+
+
+    static queryLoginState() {
         return (
             AsyncStorage.getItem(GH_USER_KEY)
                 .then(result => {
                     if (result) {
-                        console.log('GHService start user is:' + result);
+                        console.log('user in cache is:', result);
                         GLOBAL_USER = JSON.parse(result);
                     }
                     return GLOBAL_USER;
                 })
                 .catch(err => {
-                    console.log('loginErr is: ' + err);
+                    console.error('queryLoginState error: ', err);
                 })
         );
     }
 
-    isOnboard() {
-        return GLOBAL_USER.login.length > 0;
-    }
-
-    onboard(username) {
-        const path = API_PATH + '/users/' + username.trim();
+    static onboard(username) {
+        const path = GithubService.apiPath + '/users/' + username.trim();
         const validPromise = this.fetchPromise(path);
         return validPromise.then(response => {
-            console.log("finish onboard request!");
-            console.log(response);
+            console.log("onboard response is:", response);
+
             const status = response.status;
             const isValid = status < 400;
-            const responseData = response.json();
-            if (isValid) {
-                return responseData;
-            }
-            else {
-                GLOBAL_USER.login = username;
-                const bodyMessage = json.message;
+            response.json().then(
+                responseData=> {
+                    if (isValid) {
+                        GLOBAL_USER.login = responseData.login;
+                        GLOBAL_USER.avatar = responseData.avatar_url;
+                        GLOBAL_USER.userId = responseData.id;
+                        GLOBAL_USER.url = responseData.url;
+                        Object.assign(GLOBAL_USER, responseData);
+                        this._setNeedSaveGlobalUser();
+                        return GLOBAL_USER;
+                    }
+                    else {
+                        GLOBAL_USER.login = username;
+                        const bodyMessage = responseData.message;
+                        throw new Error(bodyMessage);
+                    }
+                }
+            );
 
-                throw new Error(bodyMessage);
-            }
-        }).then(responseData=> {
-                GLOBAL_USER.login = responseData.login;
-                GLOBAL_USER.avatar = responseData.avatar_url;
-                GLOBAL_USER.userId = responseData.id;
-                GLOBAL_USER.url = responseData.url;
-                Object.assign(GLOBAL_USER, responseData);
-                SingleGHService._setNeedSaveGlobalUser();
-
-                return GLOBAL_USER;
-            }
-        );
+        });
     }
 
-    isLogined() {
-        return this.isOnboard() && GLOBAL_USER.tokenInfo.token.length > 0;
+    static isLogined() {
+        return GithubService._isOnboard() && GLOBAL_USER.tokenInfo.token.length > 0;
     }
 
-    login(name, pwd) {
+    static login(name, pwd) {
         const bytes = name.trim() + ':' + pwd.trim();
         const encoded = base64.encode(bytes);
-
+        let that = this;
         return (
             fetch(AUTH_URL_PATH, {
                 method: 'POST',
@@ -113,64 +152,68 @@ class GithubService extends EventEmitter {
                     'note': 'not abuse'
                 })
             })
-                .then((response) => {
+                .then(response=> {
+                    console.log("login response is:", response);
                     const isValid = response.status < 400;
-                    const body = response._bodyInit;
-                    const json = JSON.parse(body);
-                    if (isValid) {
-                        const token = json.token;
-                        const tokenId = json.id;
-                        console.log('body is: ' + JSON.stringify(body), 'json is: ', json, 'token is: ', token);
-                        let tokenInfo = {};
-                        tokenInfo.id = tokenId;
-                        tokenInfo.token = token;
-                        GLOBAL_USER.tokenInfo = tokenInfo;
-                        GLOBAL_USER.Login = name;
-                        GLOBAL_USER.password = pwd;
-                        GLOBAL_USER.url = json.url;
+                    response.json(responseData=> {
+                        if (isValid) {
+                            GLOBAL_USER.Login = name;
+                            GLOBAL_USER.password = pwd;
+                            GLOBAL_USER.url = responseData.url;
+                            GLOBAL_USER.tokenInfo = {id: responseData.id, token: responseData.token};
+                            return that.getUserInfo(GLOBAL_USER.Login);
+                        } else {
+                            throw new Error(responseData.message);
+                        }
+                    });
 
-                        const path = API_PATH + '/users/' + GLOBAL_USER.Login.trim();
-                        return this.fetchPromise(path);
-                    } else {
-                        throw new Error(json.message);
-                    }
                 })
-                .then(value => {
-                    const status = value.status;
-                    const isValid = status < 400;
-                    const json = JSON.parse(value._bodyInit);
-                    if (isValid) {
-                        GLOBAL_USER.login = json.login;
-                        GLOBAL_USER.avatar = json.avatar_url;
-                        GLOBAL_USER.userId = json.id;
-                        GLOBAL_USER.url = json.url;
-                        Object.assign(GLOBAL_USER, json);
-
-                        return SingleGHService._setNeedSaveGlobalUser();
-                    }
-                })
-        )
+        );
     }
 
-    logout(cb) {
+    static getUserInfo(name) {
+        const path = GithubService.apiPath + '/users/' + name.trim();
+        let that = this;
+        return fetch(path, {
+            headers: this.tokenHeader(),
+        }).then(response=> {
+            console.log("query user response is:", response);
+            const status = response.status;
+            const isValid = status < 400;
+            response.json().then(responseData=> {
+                if (isValid) {
+                    GLOBAL_USER.login = responseData.login;
+                    GLOBAL_USER.avatar = responseData.avatar_url;
+                    GLOBAL_USER.userId = responseData.id;
+                    GLOBAL_USER.url = responseData.url;
+                    Object.assign(GLOBAL_USER, responseData);
+
+                    return that._setNeedSaveGlobalUser();
+                }
+            });
+        }).catch(err=> {
+            console.error("query user error:", err);
+        });
+    }
+
+    static logout(cb) {
         fetch(AUTH_URL_PATH + '/' + GLOBAL_USER.tokenInfo.id, {
             method: 'DELETE',
             headers: this.tokenHeader()
+        }).then(response=> {
+            GLOBAL_USER = EMPTY_USER;
+            AsyncStorage.removeItem(GH_USER_KEY);
+
+            cb && cb();
+
+            DeviceEventEmitter.emit('didLogout');
         })
             .catch(err => {
-                console.log('logout err is: ' + err);
+                console.error('logout err is: ', err);
             });
-
-        GLOBAL_USER = EMPTY_USER;
-        AsyncStorage.removeItem(GH_USER_KEY);
-        DXUtils.clearCookie();
-
-        cb && cb();
-
-        SingleGHService.emit('didLogout');
     }
 
-    tokenHeader() {
+    static tokenHeader() {
         let tHeader = {
             'User-Agent': config.userAgent,
             'Accept': 'application/vnd.github.v3+json'
@@ -178,27 +221,11 @@ class GithubService extends EventEmitter {
         if (this.isLogined()) {
             tHeader.Authorization = 'token ' + GLOBAL_USER.tokenInfo.token;
         }
-        console.log('token header is: ' + JSON.stringify(tHeader));
-
         return tHeader;
     }
 
-    feedsPath() {
-        let feedsURL = API_PATH + '/users/' + GLOBAL_USER.login + '/received_events';
-        return feedsURL;
-    }
 
-    getNotifications() {
-        if (!this.isLogined()) return;
-
-        return (
-            fetch(API_PATH + '/notifications', {
-                headers: this.tokenHeader(),
-            })
-        )
-    }
-
-    checkNeedLoginWithPromise(promiseFunc, navigator) {
+    static checkNeedLoginWithPromise(promiseFunc, navigator) {
         if (!this.isLogined()) {
             navigator.push({
                 id: 'login',
@@ -211,85 +238,55 @@ class GithubService extends EventEmitter {
         }
     }
 
-    getRepoHTMLString(userAndRepo) {
-        let tokenHeader = this.tokenHeader();
-        tokenHeader.Accept = 'application/vnd.github.VERSION.raw';
-        const repoURL = API_PATH + '/repos/' + userAndRepo + '/readme';
-
-        return fetch(repoURL, {
-            headers: tokenHeader,
-        })
-    }
-
-    _setNeedSaveGlobalUser() {
-        return AsyncStorage.setItem(GH_USER_KEY, JSON.stringify(GLOBAL_USER));
-    }
-
-    currentUser() {
+    static currentUser() {
         return GLOBAL_USER;
     }
 
-    fetchPromise(url) {
+    static fetchPromise(url, method = 'GET') {
         return fetch(url, {
+            method: method,
             headers: this.tokenHeader(),
         });
     }
 
-// repo: repo_full_name, action: 'GET', 'DELETE', 'PUT'
-    repoStarQuery(repo, action) {
-        const path = API_PATH + '/user/starred/' + repo;
+    static repoStarQuery(repo, action) {
+        const path = GithubService.apiPath + '/user/starred/' + repo;
         const method = action || 'GET';
-        return fetch(path, {
-            method: method,
-            headers: this.tokenHeader(),
-        })
+        return this.fetchPromise(path, method);
     }
 
-    repoWatchQuery(repo, action) {
-        let path = API_PATH + '/repos/' + repo + '/subscription';
+    static repoWatchQuery(repo, action) {
+        let path = GithubService.apiPath + '/repos/' + repo + '/subscription';
         const method = action || 'GET';
-        console.log('watchquery path', path, method);
+
         if (method != 'GET') {
-            path = API_PATH + '/user/subscriptions' + '/' + repo;
+            path = GithubService.apiPath + '/user/subscriptions' + '/' + repo;
         }
-        return fetch(path, {
-            method: method,
-            headers: this.tokenHeader(),
-        })
+        return this.fetchPromise(path, method);
     }
 
-    userFollowQuery(targetUser, action) {
-        let path = API_PATH + '/users/' + GLOBAL_USER.login + '/following' + targetUser;
+    static userFollowQuery(targetUser, action) {
+        let path = GithubService.apiPath + '/users/' + GLOBAL_USER.login + '/following' + targetUser;
         const method = action || 'GET';
         if (this.isLogined() || method !== 'GET') {
             path = API_PATH + '/user/following/' + targetUser;
         }
-        return fetch(path, {
-            method: method,
-            headers: this.tokenHeader(),
-        })
+        return this.fetchPromise(path, method);
     }
 
-    notifications() {
-        const path = API_PATH + '/notifications';
-    }
 
-    starredRepos(username) {
+    static starredRepos(username) {
         if (username.length == 0) {
-            console.log('Error for username', username);
+            console.error('username is empty!', username);
             return;
         }
-        const path = API_PATH + '/' + username + '/starred';
-        return fetch(path, {
-            headers: this.tokenHeader(),
-        })
+        const path = GithubService.apiPath + '/' + username + '/starred';
+        return this.fetchPromise(path);
     }
 
-    starredReposCount(username) {
-        const path = API_PATH + '/users/' + username + '/starred?per_page=1';
-        return fetch(path, {
-            headers: this.tokenHeader(),
-        })
+    static starredReposCount(username) {
+        const path = GithubService.apiPath + '/users/' + username + '/starred?per_page=1';
+        return this.fetchPromise(path)
             .then(value => {
                 const status = value.status;
                 let count = '';
@@ -309,8 +306,27 @@ class GithubService extends EventEmitter {
                 return count;
             })
     }
+
+    static getNotifications() {
+        if (!this.isLogined()) return;
+
+        return this.fetchPromise(GithubService.apiPath + '/notifications');
+
+    }
+
+    static addListener(type, listener) {
+        DeviceEventEmitter.addListener(type, listener);
+    }
+
+    static removeAllListeners(type) {
+        DeviceEventEmitter.removeAllListeners(type);
+    }
+
+    static _isOnboard() {
+        return GLOBAL_USER.login.length > 0;
+    }
+
+    _setNeedSaveGlobalUser() {
+        return AsyncStorage.setItem(GH_USER_KEY, JSON.stringify(GLOBAL_USER));
+    }
 }
-
-const SingleGHService = new GithubService();
-
-module.exports = SingleGHService;

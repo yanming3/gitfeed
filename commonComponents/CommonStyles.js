@@ -1,31 +1,30 @@
-const React = require('react-native');
-const Colors = require('./Colors');
+'use strict';
 
-const {
-  StyleSheet,
-} = React;
+import {
+    StyleSheet,
+} from 'react-native';
 
-const commonStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+import Colors from './Colors';
 
-  shadowLine: {
-    shadowColor: '#999999',
-    shadowOpacity: 0.8,
-    shadowRadius: 1,
-    shadowOffset: {
-      height: 2,
-      width: 1
+export default StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-  },
 
-  sepLine: {
-    backgroundColor: Colors.backGray,
-    height: 0.5,
-  },
+    shadowLine: {
+        shadowColor: '#999999',
+        shadowOpacity: 0.8,
+        shadowRadius: 1,
+        shadowOffset: {
+            height: 2,
+            width: 1
+        },
+    },
+
+    sepLine: {
+        backgroundColor: Colors.backGray,
+        height: 0.5,
+    },
 });
-
-module.exports = commonStyles;

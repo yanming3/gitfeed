@@ -1,24 +1,7 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const Icon = require('react-native-vector-icons/Ionicons');
-const Colors = require('../commonComponents/Colors');
-const NavigatorNavigationBarStyle = require('./GHNavigatorBarStyle');
-const {UserComponent} = require('./UserComponent');
-const GHWebComponent = require('./GithubWebComponent');
-const UserListComponent = require('./UserListComponent');
-const FeedComponent = require('./FeedComponent');
-const LoginComponent = require('./LoginComponent');
-const OrgComponent = require('./OrgComponent');
-const PersonalComponent = require('./PersonalComponent');
-const SettingsComponent = require('./SettingsComponent');
-const RepoListComponent = require('./RepoListComponent');
-const ExploreComponent = require('./ExploreComponent');
-const SearchComponent = require('./SearchComponent');
-const ShowCaseComponent = require('./ShowcaseComponent');
-const FamousComponent = require('./FamousComponent');
-const EditProfileComponent = require('./EditProfileComponent')
+'use strict';
 
-const {
+import React from 'react';
+import {
     Navigator,
     TouchableOpacity,
     StyleSheet,
@@ -29,7 +12,27 @@ const {
     BackAndroid,
     Platform,
     Dimensions,
-    } = ReactNative;
+} from 'react-native';
+
+import Icon from 'react-native-vector-icons/Ionicons';
+import Colors from '../commonComponents/Colors';
+const NavigatorNavigationBarStyle = require('./GHNavigatorBarStyle');
+import UserComponent from './UserComponent';
+import GHWebComponent from './GithubWebComponent';
+import UserListComponent from './UserListComponent';
+import FeedComponent from './FeedComponent';
+import LoginComponent from './LoginComponent';
+import OrgComponent from './OrgComponent';
+import PersonalComponent from './PersonalComponent';
+import SettingsComponent from './SettingsComponent';
+import RepoListComponent from './RepoListComponent';
+import ExploreComponent from './ExploreComponent';
+import SearchComponent from './SearchComponent';
+import ShowCaseItem from './ShowcaseItem';
+import FamousComponent from './FamousComponent';
+import EditProfileComponent from './EditProfileComponent';
+
+
 const ScreenWidth = Dimensions.get('window').width;
 const NavigationBarRouteMapper = {
     LeftButton: function (route, navigator, index, navState) {
@@ -300,7 +303,7 @@ const routes = {
             case 'search':
                 return <SearchComponent navigator={navigator} route={route}/>;
             case 'showcase':
-                return <ShowCaseComponent navigator={navigator} showcase={route.obj}/>;
+                return <ShowCaseItem navigator={navigator} showcase={route.obj}/>;
             case 'editprofile':
                 return <EditProfileComponent navigator={navigator} route={route}/>;
         }

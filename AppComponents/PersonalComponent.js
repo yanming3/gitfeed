@@ -1,12 +1,6 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Icon = require('react-native-vector-icons/Ionicons');
-const Colors = require('../commonComponents/Colors');
-const SettingComponent = require('./SettingsCell');
-
-const {
+'use strict';
+import React, {Component} from 'react';
+import {
     View,
     Text,
     StyleSheet,
@@ -15,12 +9,18 @@ const {
     Image,
     Navigator,
     Platform,
-    } = ReactNative;
+} from 'react-native';
+
+import GHService from '../networkService/GithubServices';
+import Icon from 'react-native-vector-icons/Ionicons';
+import Colors from '../commonComponents/Colors';
+import SettingCell from './SettingsCell';
+
 
 const ICON_SIZE = 20;
 
-const PersonComponent = React.createClass({
-    pressLogin() {
+export default class PersonComponent extends Component {
+    pressLogin = ()=> {
         const isLogined = GHService.isLogined();
         if (isLogined) return;
 
@@ -30,9 +30,9 @@ const PersonComponent = React.createClass({
             title: 'Please Login now',
         });
 
-    },
+    }
 
-    onEditProfile() {
+    onEditProfile = ()=> {
         if (GHService.isLogined()) {
             this.props.navigator.push({id: 'editprofile'});
         } else {
@@ -42,7 +42,7 @@ const PersonComponent = React.createClass({
                 sceneConfig: Navigator.SceneConfigs.FloatFromBottom,
             });
         }
-    },
+    }
 
     render() {
         const user = GHService.currentUser();
@@ -89,19 +89,19 @@ const PersonComponent = React.createClass({
                             color={Colors.textGray}/>
                     </View>
                 </TouchableHighlight>
-                <SettingComponent
+                <SettingCell
                     iconName={'ios-eye'}
                     iconColor={Colors.blue}
-                    settingName={'Edit Profile'}
+                    settingName={'个人资料'}
                     onPress={this.onEditProfile}
                 />
-                <SettingComponent
-                    onPress={() => this.props.navigator.push({id: 'settings'})}
+                <SettingCell settingName={'设置'}
+                             onPress={() => this.props.navigator.push({id: 'settings'})}
                 />
             </ScrollView>
         );
     }
-});
+}
 
 var styles = StyleSheet.create({
     container: {
@@ -154,5 +154,3 @@ var styles = StyleSheet.create({
         marginRight: 5,
     }
 });
-
-module.exports = PersonComponent;

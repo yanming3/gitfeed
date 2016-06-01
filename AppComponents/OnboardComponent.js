@@ -1,11 +1,5 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const Colors = require('../commonComponents/Colors');
-const CommonStyles = require('../commonComponents/CommonStyles');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const GHService = require('../networkService/GithubServices')
-
-const {
+import React,{Component,PropTypes} from 'react';
+import {
     StyleSheet,
     ActivityIndicatorIOS,
     View,
@@ -16,22 +10,29 @@ const {
     ScrollView,
     ProgressBarAndroid,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
-const OnboardComponent = React.createClass({
-    propTypes: {
-        didOnboard: React.PropTypes.func,
-    },
+import Colors from '../commonComponents/Colors';
+import GHService from '../networkService/GithubServices';
 
-    getInitialState() {
-        return {
+
+export default class OnboardComponent extends Component {
+    static propTypes = {
+        didOnboard: PropTypes.func,
+    }
+
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             username: '',
             loadingError: null,
             loading: false,
-        }
-    },
+        };
+    }
 
-    submitOnboard() {
+    submitOnboard = ()=> {
         if (this.state.username.length == 0) return;
 
         this.setState({
@@ -57,20 +58,20 @@ const OnboardComponent = React.createClass({
                     this.props.didOnboard && this.props.didOnboard(null, needLogin);
                 }
             })
-    },
+    }
 
-    onNameChange(text) {
+    onNameChange = (text)=> {
         this.setState({
             username: text,
         });
-    },
+    }
 
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate = (nextProps, nextState)=> {
         const loginErr = nextState.loadingError != this.state.loadingError;
         const loading = nextState.loading != this.state.loading;
 
         return loginErr || loading;
-    },
+    }
 
     render() {
         let failedDesc;
@@ -106,7 +107,7 @@ const OnboardComponent = React.createClass({
                             returnKeyType={'done'}
                             onChangeText={this.onNameChange}
                             onSubmitEditing={this.submitOnboard}
-                            placeholder={'Github username (NOT EMAIL!)'}
+                            placeholder={'Github账号'}
                         />
                         <TouchableHighlight
                             style={styles.go}
@@ -123,8 +124,8 @@ const OnboardComponent = React.createClass({
                 </View>
             </ScrollView>
         )
-    },
-});
+    }
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -185,4 +186,3 @@ const styles = StyleSheet.create({
     },
 });
 
-module.exports = OnboardComponent

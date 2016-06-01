@@ -1,59 +1,59 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const ScrollableTabView = require('react-native-scrollable-tab-view');
-const ScrollableTabBar = ScrollableTabView.ScrollableTabBar;
-const Colors = require('../commonComponents/Colors');
-const DefaultTabBar = require('./DefaultTabBar');
-const GHRefreshListView = require('./GHRefreshListView');
-const RepoCell = require('./RepoCell');
-const UserCell = require('./UserCell');
-const LanguageComponent = require('./LanguageComponent');
-const TrendLanguages = require('../commonComponents/TrendLanguages.json');
-const ShowCasesComponent = require('./ShowCasesComponent');
-const ExploreCell = require('./ExploreCell');
+'use strict';
 
-const {
+import React ,{Component} from 'react';
+import {
     View,
     StyleSheet,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import RefreshListView from './RefreshListView';
+import LanguageComponent from './LanguageComponent';
+import ShowCasesComponent from './ShowCasesComponent';
+import ExploreCell from './ExploreCell';
+
+
+const TrendLanguages = require('../commonComponents/TrendLanguages.json');
 const ICON_SIZE = 12;
 const BASE_TRENDING_PATH = 'http://trending.codehub-app.com/v2/trending';
 
-const ExploreComponent = React.createClass({
-    _selectTab: 0,
-    _lvs: [],
+export default class  ExploreComponent extends Component{
 
-    getInitialState() {
-        return {
+
+    // 构造
+      constructor(props) {
+        super(props);
+        // 初始状态
+          this. _selectTab=0;
+          this._lvs=[];
+        this.state = {
             currentLanguage: null,
-        }
-    },
+        };
+      }
 
-    _resetLoadedStatus() {
+    _resetLoadedStatus=()=> {
         this._lvs.forEach((lv) => {
             lv.clearData();
         })
-    },
+    }
 
-    onSelectLanguage(language) {
+    onSelectLanguage=(language) =>{
         this.setState({
             currentLanguage: language,
         });
 
         const refreshListView = this._lvs[this._selectTab];
         refreshListView && refreshListView.reloadData();
-    },
+    }
 
-    onChangeTab(tab) {
+    onChangeTab=(tab)=> {
         this._selectTab = tab.i;
         const refreshListView = this._lvs[tab.i];
         refreshListView && refreshListView.reloadDataIfNeed();
-    },
+    }
 
-    _getPath(desc) {
+    _getPath=(desc)=> {
         let path = BASE_TRENDING_PATH + '?since=' + desc;
         const currentLanguage = this.state.currentLanguage;
         if (currentLanguage && currentLanguage != 'All Languages') {
@@ -61,28 +61,31 @@ const ExploreComponent = React.createClass({
         }
 
         return path;
-    },
+    }
 
-    reloadDailyPath() {
+    reloadDailyPath=()=> {
         return this._getPath('daily');
-    },
+    }
 
-    reloadWeeklyPath() {
+    reloadWeeklyPath=()=> {
         return this._getPath('weekly');
-    },
+    }
 
-    reloadMonthlyPath() {
+    reloadMonthlyPath=()=> {
         return this._getPath('monthly');
-    },
+    }
 
-    handleReloadData(value) {
+    handleReloadData=(value)=> {
         return value.json();
-    },
+    }
 
-    renderRepo(rowData, sectionID, rowID, highlightRow) {
+    renderRepo=(rowData, sectionID, rowID, highlightRow)=> {
         return <ExploreCell key={rowID} trendRepo={rowData} navigator={this.props.navigator}/>;
-    },
+    }
 
+    componentDidMount = ()=> {
+       this.onChangeTab({i:0});
+    }
     render() {
         let paddingTop = 64;
         if (Platform.OS == 'android') {
@@ -90,16 +93,15 @@ const ExploreComponent = React.createClass({
         }
         return (
             <View style={{backgroundColor: 'white', paddingTop: paddingTop, flex: 1}}>
-                <ShowCasesComponent style={styles.showcase} navigator={this.props.navigator}/>
-                <LanguageComponent
-                    languageList={TrendLanguages}
-                    onSelectLanguage={this.onSelectLanguage}
-                />
+                <View style={{flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
+                    <ShowCasesComponent style={styles.showcase} navigator={this.props.navigator}/>
+                    <LanguageComponent languageList={TrendLanguages}
+                                       onSelectLanguage={this.onSelectLanguage}
+                    />
+                </View>
                 <ScrollableTabView
-                    renderTabBar={() => <DefaultTabBar />}
-                    onChangeTab={this.onChangeTab}
-                >
-                    <GHRefreshListView
+                    onChangeTab={this.onChangeTab} initialPage={0}>
+                    <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[0] = cp}
                         tabLabel="Daily"
@@ -107,9 +109,10 @@ const ExploreComponent = React.createClass({
                         reloadPromisePath={this.reloadDailyPath}
                         handleReloadData={this.handleReloadData}
                         navigator={this.props.navigator}
+                        autoReload={true}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[1] = cp}
                         tabLabel="Weekly"
@@ -117,9 +120,10 @@ const ExploreComponent = React.createClass({
                         reloadPromisePath={this.reloadWeeklyPath}
                         handleReloadData={this.handleReloadData}
                         navigator={this.props.navigator}
+                        autoReload={false}
                     >
-                    </GHRefreshListView>
-                    <GHRefreshListView
+                    </RefreshListView>
+                    <RefreshListView
                         enablePullToRefresh={true}
                         ref={(cp) => this._lvs[2] = cp}
                         tabLabel="Monthly"
@@ -127,13 +131,14 @@ const ExploreComponent = React.createClass({
                         reloadPromisePath={this.reloadMonthlyPath}
                         handleReloadData={this.handleReloadData}
                         navigator={this.props.navigator}
+                        autoReload={false}
                     >
-                    </GHRefreshListView>
+                    </RefreshListView>
                 </ScrollableTabView>
             </View>
         )
     }
-});
+};
 
 const styles = StyleSheet.create({
     icon: {
@@ -161,5 +166,3 @@ const styles = StyleSheet.create({
         padding: 5,
     },
 });
-
-module.exports = ExploreComponent;

@@ -1,17 +1,15 @@
-const React=require('react');
-const ReactNative = require('react-native');
-
-const Colors = require('./Colors');
-const CommonStyles = require('./CommonStyles');
-
-const {
+import React from 'react';
+import {
     View,
     ActivityIndicatorIOS,
     ProgressBarAndroid,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
-class CommonComponents {
+import Colors from './Colors';
+import CommonStyles from './CommonStyles';
+
+export default class CommonComponents {
     static renderLoadingView() {
         if (Platform.OS === 'android') {
             return (
@@ -42,5 +40,3 @@ class CommonComponents {
         )
     }
 }
-
-module.exports = CommonComponents;

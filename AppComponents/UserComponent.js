@@ -1,12 +1,6 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const CommonComponents = require('../commonComponents/CommonComponents');
-const Icon = require('react-native-vector-icons/Ionicons');
-const Colors = require('../commonComponents/Colors');
-const RepoCell = require('./RepoCell');
-
-const {
+'use strict';
+import React, {Component} from 'react';
+import {
     View,
     ActivityIndicatorIOS,
     Text,
@@ -16,34 +10,43 @@ const {
     ListView,
     Navigator,
     Platform,
-    } = ReactNative;
+} from 'react-native';
+
+import Icon from 'react-native-vector-icons/Ionicons';
+import Colors from '../commonComponents/Colors';
+import RepoCell from './RepoCell';
+
+
+import GHService from '../networkService/GithubServices';
 
 const ICON_SIZE = 18;
 
-const UserComponent = React.createClass({
-    _headerHeight: 0,
+export default class UserComponent extends Component {
 
-    PropTypes: {
+    static propTypes = {
         user: React.PropTypes.object,
         userLoaded: false,
-    },
+    }
 
-    getInitialState() {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
         const dataSourceParam = {
             rowHasChanged: (row1, row2) => row1 !== row2,
             sectionHeaderHasChanged: (s1, s2) => s1 !== s2,
         }
-
-        return {
+        this._headerHeight = 0;
+        this.state = {
             dataSource: new ListView.DataSource(dataSourceParam),
         };
-    },
+    }
 
-    onHeaderLayout(e) {
+    onHeaderLayout = (e)=> {
         this._headerHeight = e.nativeEvent.layout.height;
-    },
+    }
 
-    onLoadDetailUser(user) {
+    onLoadDetailUser = (user)=> {
         const repoURL = user.repos_url + '?sort=updated';
 
         GHService.fetchPromise(repoURL).then(res=>res.json())
@@ -53,9 +56,9 @@ const UserComponent = React.createClass({
                     userLoaded: true,
                 });
             })
-    },
+    }
 
-    renderHeader() {
+    renderHeader = ()=> {
         return (
             <AboutComponent
                 key={this.props.user.login}
@@ -65,11 +68,11 @@ const UserComponent = React.createClass({
                 onLoadUser={this.onLoadDetailUser}
             />
         )
-    },
+    }
 
-    renderRow(rowData, sectionID, rowID, highlightRow) {
+    renderRow = (rowData, sectionID, rowID, highlightRow)=> {
         return <RepoCell repo={rowData} navigator={this.props.navigator} key={rowID}/>
-    },
+    }
 
     render() {
         let idc;
@@ -103,10 +106,10 @@ const UserComponent = React.createClass({
             </View>
         )
     }
-});
+};
 
-const AboutComponent = React.createClass({
-    PropTypes: {
+class AboutComponent extends Component {
+    static propTypes = {
         /*
          * Just the simplest user
          * {id: 3621906, login: "dongxicheng",
@@ -117,27 +120,31 @@ const AboutComponent = React.createClass({
          */
         user: React.PropTypes.object,
         onLoadUser: React.PropTypes.func,
-    },
+    };
 
-    getInitialState() {
-        return {
+    // 构造
+    constructor(props) {
+        super(props);
+        // 初始状态
+        this.state = {
             user: this.props.user,
-        }
-    },
+        };
+    }
 
-    onPressEmail() {
+
+    onPressEmail = ()=> {
         console.log('press email');
-    },
+    }
 
-    onPressBlog() {
+    onPressBlog = ()=> {
         const blog = {
             html: this.state.user.blog,
             title: this.state.user.name + "'s blog"
         }
         this.props.navigator.push({id: 'web', obj: blog});
-    },
+    }
 
-    onFollow() {
+    onFollow = ()=> {
         const action = this.state.user.isFollowing ? 'DELETE' : 'PUT';
         const followPromise = (() => {
             GHService.userFollowQuery(this.state.user.login, action)
@@ -153,9 +160,9 @@ const AboutComponent = React.createClass({
         });
 
         GHService.checkNeedLoginWithPromise(followPromise, this.props.navigator);
-    },
+    }
 
-    onOpenFollowers() {
+    onOpenFollowers = ()=> {
         const url = this.state.user.followers_url;
         if (!url) return;
 
@@ -164,9 +171,9 @@ const AboutComponent = React.createClass({
             title: 'Followers',
         }
         this.props.navigator.push({id: 'userList', obj: user});
-    },
+    }
 
-    onOpenFollowing() {
+    onOpenFollowing = ()=> {
         const url = this.state.user.url;
         if (!url) return;
 
@@ -175,9 +182,9 @@ const AboutComponent = React.createClass({
             title: 'Following',
         }
         this.props.navigator.push({id: 'userList', obj: user});
-    },
+    }
 
-    onOpenStarredRepos() {
+    onOpenStarredRepos = ()=> {
         const username = this.state.user.login;
         /**
          * This is a a little special for starred repo API
@@ -188,9 +195,9 @@ const AboutComponent = React.createClass({
             title: username + "'s Starred",
         }
         this.props.navigator.push({id: 'repos', obj: repo});
-    },
+    }
 
-    renderOrg(org) {
+    renderOrg = (org)=> {
         return (
             <TouchableOpacity onPress={() => {
           this.props.navigator.push({id: 'org', obj: org});
@@ -198,9 +205,9 @@ const AboutComponent = React.createClass({
                 <Image style={styles.orgnizationsImage} source={{uri: org.avatar_url}}/>
             </TouchableOpacity>
         )
-    },
+    }
 
-    componentDidMount() {
+    componentDidMount = ()=> {
         const user = this.props.user;
         GHService.fetchPromise(user.url)
             .then(res => {
@@ -264,9 +271,9 @@ const AboutComponent = React.createClass({
                     });
                 });
         }
-    },
+    }
 
-    followButton() {
+    followButton = ()=> {
         const currentUser = GHService.currentUser();
         if (currentUser.login == this.state.user.login) {
             return null;
@@ -296,7 +303,7 @@ const AboutComponent = React.createClass({
         )
 
         return followStatus;
-    },
+    }
 
     render() {
         const user = this.state.user;
@@ -334,7 +341,7 @@ const AboutComponent = React.createClass({
             userEmail = (
                 <View style={styles.iconTextContainer}>
                     <Icon
-                        name='md-email'
+                        name='ios-mail'
                         size={ICON_SIZE}
                         style={styles.icon}
                         color={Colors.textGray}/>
@@ -446,7 +453,8 @@ const AboutComponent = React.createClass({
             </View>
         )
     }
-});
+}
+;
 
 var styles = StyleSheet.create({
     icon: {
@@ -574,8 +582,3 @@ var styles = StyleSheet.create({
     },
 
 });
-
-module.exports = {
-    UserComponent: UserComponent,
-    AboutComponent: AboutComponent
-};

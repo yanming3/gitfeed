@@ -1,35 +1,35 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const GHService = require('../networkService/GithubServices');
-const GHCell = require('./GHEventCell');
-const GHRefreshListView = require('./GHRefreshListView');
-const Colors = require('../commonComponents/Colors');
-const ErrorPlaceholder=require('../commonComponents/ErrorPlacehoderComponent');
-
-const {
+import React,{Component} from 'react';
+import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
     Platform,
-    } = ReactNative;
+} from 'react-native';
 
-const FeedComponent = React.createClass({
-    handleReloadData(response) {
+import GHService from '../networkService/GithubServices';
+import GHCell from './GHEventCell';
+import RefreshListView from './RefreshListView';
+import Colors from '../commonComponents/Colors';
+import ErrorPlaceholder from '../commonComponents/ErrorPlacehoderComponent';
+
+
+export default class FeedComponent extends Component {
+    handleReloadData=(response) =>{
         return response.json();
-    },
+    }
 
-    reloadPath() {
-        return GHService.feedsPath();
-    },
+    reloadPath=()=> {
+        return GHService.feedsPath;
+    }
 
-    renderRow(rowData, sectionID, rowID, highlightRow) {
+    renderRow=(rowData, sectionID, rowID, highlightRow) =>{
         return (
             <GHCell key={rowID} ghEvent={rowData} navigator={this.props.navigator}/>
         )
-    },
+    }
 
-    renderErrorPlaceholder(error) {
+    renderErrorPlaceholder=(error)=> {
         const message = error.message;
         if (message.indexOf('Found') > -1) {
             return (
@@ -67,7 +67,7 @@ const FeedComponent = React.createClass({
                     onPress={this._listView && this._listView.reloadData}/>
             )
         }
-    },
+    }
 
     render() {
         let marginTop = 44;
@@ -76,22 +76,23 @@ const FeedComponent = React.createClass({
         }
 
         return (
-            <GHRefreshListView
+            <RefreshListView
+                ref={(cp)=>this._listView=cp}
                 style={{flex: 1, marginTop: marginTop}}
                 enablePullToRefresh={true}
                 renderRow={this.renderRow}
                 reloadPromisePath={this.reloadPath}
                 handleReloadData={this.handleReloadData}
                 navigator={this.props.navigator}
-                maxPage={5}
                 contentInset={{top: 64, left: 0, bottom: 49, right: 0}}
                 contentOffset={{x:0, y: -64}}
                 renderErrorPlaceholder={this.renderErrorPlaceholder}
+                cacheKey={'FEEDS_KEY'}
             >
-            </GHRefreshListView>
+            </RefreshListView>
         );
-    },
-});
+    }
+};
 
 var styles = StyleSheet.create({
     container: {
@@ -137,6 +138,3 @@ var styles = StyleSheet.create({
         marginRight: 30,
     }
 });
-
-
-module.exports = FeedComponent;

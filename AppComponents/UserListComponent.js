@@ -1,29 +1,32 @@
-var React = require('react');
-const GHRefreshListView = require('./GHRefreshListView');
-const UserCell = require('./UserCell');
-const Platform = require('Platform');
+import React,{Component,PropTypes} from 'react';
+import {
+    Platform,
+} from 'react-native';
 
-const UserListComponent = React.createClass({
-  PropTypes: {
-    userListURL: React.PropTypes.string,
-  },
+import RefreshListView from './RefreshListView';
+import UserCell from './UserCell';
 
-  handleReloadData(response) {
+export default class  UserListComponent extends Component{
+  static propTypes={
+    userListURL: PropTypes.string,
+  }
+
+  handleReloadData=(response)=> {
     const body = response._bodyInit;
     const jsonResult = JSON.parse(body);
 
     return jsonResult;
-  },
+  }
 
-  reloadPath() {
+  reloadPath=()=> {
     return this.props.userListURL;
-  },
+  }
 
-  renderRow(rowData, sectionID, rowID, highlightRow) {
+  renderRow=(rowData, sectionID, rowID, highlightRow)=> {
     return (
       <UserCell key={rowID} user={rowData} navigator={this.props.navigator}/>
     )
-  },
+  }
 
   render() {
     let marginTop = 44;
@@ -32,7 +35,7 @@ const UserListComponent = React.createClass({
     }
 
     return (
-      <GHRefreshListView
+      <RefreshListView
         style={{flex: 1, marginTop: marginTop}}
         enablePullToRefresh={true}
         renderRow={this.renderRow}
@@ -42,9 +45,7 @@ const UserListComponent = React.createClass({
         contentInset={{top: 64, left: 0, bottom: 49, right: 0}}
         contentOffset={{x:0, y: -64}}
         >
-      </GHRefreshListView>
+      </RefreshListView>
     );
-  },
-});
-
-module.exports = UserListComponent;
+  }
+}

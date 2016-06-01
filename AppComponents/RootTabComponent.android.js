@@ -1,16 +1,14 @@
-var React = require('react');
-var ReactNative = require('react-native');
-const Routes = require('./Routes');
-const OnboardComponent = require('./OnboardComponent');
-const ScrollableTabView = require('react-native-scrollable-tab-view');
-const TabBar = require('./TabBar.android');
-
-const {
-    StyleSheet,
+import React,{Component} from 'react';
+import {
     View,
-    } = ReactNative;
+} from 'react-native';
 
-const UIExplorerApp = React.createClass({
+
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import TabBar from './TabBar';
+const Routes = require('./Routes');
+
+export default class RootTabComponent extends Component {
     render() {
         return (
             <View style={{backgroundColor: 'white', flex: 1}}>
@@ -25,16 +23,4 @@ const UIExplorerApp = React.createClass({
             </View>
         )
     }
-});
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    toolbar: {
-        backgroundColor: '#E9EAED',
-        height: 56,
-    },
-});
-
-module.exports = UIExplorerApp;
+};
